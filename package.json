@@ -1,0 +1,28 @@
+{
+  "name": "cordova-plugin-red5pro",
+  "version": "0.0.1",
+  "description": "Red5 Pro Mobile Cordova Plugin",
+  "cordova": {
+    "id": "cordova-plugin-red5pro",
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  "keywords": [
+    "cordova",
+    "video",
+    "red5pro"
+  ],
+  "scripts": {},
+  "author": "Red5 Pro",
+  "license": "MIT",
+  "engines": {
+    "cordovaDependencies": {
+      "3.0.0": {
+        "cordova": ">100"
+      }
+    }
+  },
+  "devDependencies": {}
+}

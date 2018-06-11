@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    id="cordova-plugin-red5pro"
+    version="1.0.0">
+    <name>Red5Pro</name>
+    <description>Cordova Red5 Pro Mobile SDK Plugin</description>
+    <license>MIT</license>
+    <keywords>cordova,red5,video</keywords>
+
+    <js-module src="www/red5pro.js" name="Red5Pro">
+        <clobbers target="Red5Pro" />
+    </js-module>
+
+    <!-- android -->
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="Red5Pro" >
+                <param name="android-package" value="com.red5pro.Red5Pro"/>
+                <param name="onload" value="true" />
+            </feature>
+        </config-file>
+
+        <source-file src="src/android/Red5Pro.java" target-dir="src/com/red5pro/" />
+    </platform>
+
+    <!-- ios -->
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="Red5Pro">
+                <param name="ios-package" value="Red5Pro"/>
+                <param name="onload" value="true" />
+            </feature>
+        </config-file>
+
+        <header-file src="src/ios/red5pro.h" />
+        <source-file src="src/ios/red5pro.m" />
+    </platform>
+</plugin>
