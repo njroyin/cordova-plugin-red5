@@ -21,7 +21,20 @@
             </feature>
         </config-file>
 
+        <config-file target="AndroidManifest.xml" parent="/manifest/application">
+            <uses-permission android:name="android.permission.CAMERA" />
+            <uses-permission android:name="android.permission.RECORD_AUDIO" />
+            <uses-permission android:name="android.permission.INTERNET" />
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+            <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+            <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+            <uses-permission android:name="android.permission.CAPTURE_AUDIO_OUTPUT" />
+            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+        </config-file>
+
         <source-file src="src/android/Red5Pro.java" target-dir="src/com/red5pro/" />
+        <source-file src="src/android/red5/libs/red5streaming.jar" target-dir="libs" />
+        <source-file src="src/android/red5/libs/jniLibs" target-dir="app/src/main" />
     </platform>
 
     <!-- ios -->
