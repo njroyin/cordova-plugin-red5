@@ -21,7 +21,7 @@
             </feature>
         </config-file>
 
-        <config-file target="AndroidManifest.xml" parent="/manifest/application">
+        <config-file target="AndroidManifest.xml" parent="/manifest">
             <uses-permission android:name="android.permission.CAMERA" />
             <uses-permission android:name="android.permission.RECORD_AUDIO" />
             <uses-permission android:name="android.permission.INTERNET" />
@@ -33,7 +33,7 @@
         </config-file>
 
         <source-file src="src/android/Red5Pro.java" target-dir="src/com/red5pro/" />
-        <source-file src="src/android/red5/libs/red5streaming.jar" target-dir="libs" />
+        <lib-file src="src/android/red5/libs/red5streaming.jar"/>
         <source-file src="src/android/red5/libs/jniLibs" target-dir="app/src/main" />
     </platform>
 

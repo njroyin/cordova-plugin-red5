@@ -104,8 +104,8 @@ public class Red5Pro extends CordovaPlugin {
     private void init(CallbackContext callbackContext) {
         Log.d(TAG, "Init called in Red5 Plugin");
 
-//        cordova.getActivity().runOnUiThread(new Runnable() {
-//            public void run() {
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            public void run() {
                 configuration = new R5Configuration(R5StreamProtocol.RTSP, "piphany.ontrac.io", 8554, "live", 1.0f);
                 configuration.setLicenseKey("ETGX-35SG-FLAB-BJKI");
                 configuration.setBundleID(cordova.getActivity().getPackageName());
@@ -139,8 +139,8 @@ public class Red5Pro extends CordovaPlugin {
                 cam.startPreview();
 
                 callbackContext.success();
-//            }
-//        });
+            }
+        });
     }
 
     private void resize(JSONArray args, CallbackContext callbackContext) throws JSONException {
