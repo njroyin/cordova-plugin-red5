@@ -2,9 +2,60 @@ var exec = require('cordova/exec');
 
 var PLUGIN_NAME = 'Red5Pro';
 
-var Red5Pro = new function() {
-    this.init = function() {
-        exec(null, null, PLUGIN_NAME, 'init', []);
+var red5promobile = new function() {
+
+    var initOptions = {};
+    var _this = this;
+
+    this.init = function(options, success, fail) {
+
+        _this.initOptions = options;
+
+        // Get computed positions from media element we are overlaying onto
+        var mediaElement =  document.getElementById(options.mediaElementId);
+        if (mediaElement == undefined) {
+            fail('Missing media element to place video on top of.');
+            return;
+        }
+
+        var positionRect = mediaElement.getBoundingClientRect();
+        positionRect.xPos *= window.devicePixelRatio; // Scale up to device true resolution
+        positionRect.yPos *= window.devicePixelRatio;
+        positionRect.width *= window.devicePixelRatio;
+        positionRect.height *= window.devicePixelRatio;
+
+        // Init array - layout
+        // X position, Y position, Width, Height
+        // Host, Port, app name, stream name
+        // Audio Bandwidth, Video Bandwidth, Frame Rate
+        // License Key, Show Debug View
+        var initArray = [
+            positionRect.left,
+            positionRect.top,
+            positionRect.width,
+            positionRect.height,
+            options.host,
+            options.port,
+            options.app,
+            options.bandwidth.audio,
+            options.bandwidth.video,
+            options.frameRate,
+            options.licenseKey,
+            options.debugView || false
+        ];
+        exec(success, fail, PLUGIN_NAME, 'init', initArray);
+    };
+
+    this.publish = function (streamName, success, fail) {
+      exec(success, fail, PLUGIN_NAME, 'publish', [streamName]);
+    };
+
+    this.unpublish = function (success, fail) {
+        exec(success, fail, PLUGIN_NAME, 'unpublish', []);
+    };
+
+    this.getOptions = function () {
+        return _this.initOptions;
     };
 
     this.resize = function(xPos, yPos, width, height, actualPixels) {
@@ -34,4 +85,4 @@ var Red5Pro = new function() {
     };
 };
 
-module.exports = Red5Pro;
+module.exports = red5promobile;
