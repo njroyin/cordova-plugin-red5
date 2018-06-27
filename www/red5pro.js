@@ -4,61 +4,89 @@ var PLUGIN_NAME = 'Red5Pro';
 
 var red5promobile = new function() {
 
-    var initOptions = {};
-    var _this = this;
+    this.Publisher = function () {
 
-    this.init = function(options, success, fail) {
+        var initOptions = {};
+        var _this = this;
 
-        _this.initOptions = options;
+        this.init = function(options, success, fail) {
 
-        // Get computed positions from media element we are overlaying onto
-        var mediaElement =  document.getElementById(options.mediaElementId);
-        if (mediaElement == undefined) {
-            fail('Missing media element to place video on top of.');
-            return;
-        }
+            _this.initOptions = options;
 
-        var positionRect = mediaElement.getBoundingClientRect();
-        positionRect.xPos *= window.devicePixelRatio; // Scale up to device true resolution
-        positionRect.yPos *= window.devicePixelRatio;
-        positionRect.width *= window.devicePixelRatio;
-        positionRect.height *= window.devicePixelRatio;
+            // Get computed positions from media element we are overlaying onto
+            var mediaElement =  document.getElementById(options.mediaElementId);
+            if (mediaElement == undefined) {
+                fail('Missing media element to place video on top of.');
+                return;
+            }
 
-        // Init array - layout
-        // X position, Y position, Width, Height
-        // Host, Port, app name, stream name
-        // Audio Bandwidth, Video Bandwidth, Frame Rate
-        // License Key, Show Debug View
-        var initArray = [
-            positionRect.left,
-            positionRect.top,
-            positionRect.width,
-            positionRect.height,
-            options.host,
-            options.port,
-            options.app,
-            options.bandwidth.audio,
-            options.bandwidth.video,
-            options.frameRate,
-            options.licenseKey,
-            options.debugView || false
-        ];
-        exec(success, fail, PLUGIN_NAME, 'init', initArray);
+            var positionRect = mediaElement.getBoundingClientRect();
+            positionRect.xPos *= window.devicePixelRatio; // Scale up to device true resolution
+            positionRect.yPos *= window.devicePixelRatio;
+            positionRect.width *= window.devicePixelRatio;
+            positionRect.height *= window.devicePixelRatio;
+
+            // Init array - layout
+            // X position, Y position, Width, Height
+            // Host, Port, app name, stream name
+            // Audio Bandwidth, Video Bandwidth, Frame Rate
+            // License Key, Show Debug View
+            var initArray = [
+                positionRect.left,
+                positionRect.top,
+                positionRect.width,
+                positionRect.height,
+                options.host,
+                options.port,
+                options.app,
+                options.bandwidth.audio,
+                options.bandwidth.video,
+                options.frameRate,
+                options.licenseKey,
+                options.debugView || false
+            ];
+            exec(success, fail, PLUGIN_NAME, 'init', initArray);
+        };
+
+        this.publish = function (streamName, success, fail) {
+            exec(success, fail, PLUGIN_NAME, 'publish', [streamName]);
+        };
+
+        this.unpublish = function (success, fail) {
+            exec(success, fail, PLUGIN_NAME, 'unpublish', []);
+        };
+
+        this.updateScaleMode = function (scaleMode, success, fail) {
+            exec(success, fail, PLUGIN_NAME, 'updateScaleMode', [scaleMode]);
+        };
+
+        this.swapCamera = function (success, fail) {
+            exec(success, fail, PLUGIN_NAME, 'swapCamera', []);
+        };
+
+
+        this.getOptions = function () {
+            return _this.initOptions;
+        };
+
+
+        // Common functions
+        this.resize = Resize;
+        this.hideVideo = HideVideo;
+        this.showVideo = ShowVideo;
+
     };
 
-    this.publish = function (streamName, success, fail) {
-      exec(success, fail, PLUGIN_NAME, 'publish', [streamName]);
+    this.Subscriber = function () {
+
+        // Common functions
+        this.resize = Resize;
+        this.hideVideo = HideVideo;
+        this.showVideo = ShowVideo;
     };
 
-    this.unpublish = function (success, fail) {
-        exec(success, fail, PLUGIN_NAME, 'unpublish', []);
-    };
 
-    this.getOptions = function () {
-        return _this.initOptions;
-    };
-
-    this.resize = function(xPos, yPos, width, height, actualPixels) {
+    function Resize(xPos, yPos, width, height, actualPixels) {
         if (actualPixels) {
             exec(null, null, PLUGIN_NAME, 'resize', [xPos, yPos, width, height]);
         }
@@ -82,7 +110,16 @@ var red5promobile = new function() {
 
             exec(null, null, PLUGIN_NAME, 'resize', [xPos, yPos, width, height]);
         }
-    };
+    }
+
+    function HideVideo() {
+        exec(null, null, PLUGIN_NAME, 'hideVideo', []);
+    }
+
+    function ShowVideo() {
+        exec(null, null, PLUGIN_NAME, 'showVideo', []);
+    }
+
 };
 
 module.exports = red5promobile;
