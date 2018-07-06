@@ -24,5 +24,14 @@
       }
     }
   },
-  "devDependencies": {}
+  "devDependencies": {},
+  "main": "www/red5pro.js",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/plvr/cordova-plugin-red5.git"
+  },
+  "bugs": {
+    "url": "https://gitlab.com/plvr/cordova-plugin-red5/issues"
+  },
+  "homepage": "https://gitlab.com/plvr/cordova-plugin-red5#README"
 }
