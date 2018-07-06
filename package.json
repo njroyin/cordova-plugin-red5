@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-red5pro",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Red5 Pro Mobile Cordova Plugin",
   "cordova": {
     "id": "cordova-plugin-red5pro",
@@ -24,5 +24,13 @@
       }
     }
   },
-  "devDependencies": {}
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/plvr/cordova-plugin-red5.git"
+  },
+  "bugs": {
+    "url": "https://gitlab.com/plvr/cordova-plugin-red5/issues"
+  },
+  "homepage": "https://gitlab.com/plvr/cordova-plugin-red5#README"
 }
