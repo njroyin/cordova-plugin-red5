@@ -115,6 +115,7 @@ var red5promobile = new function () {
         positionRect.width *= window.devicePixelRatio;
         positionRect.height *= window.devicePixelRatio;
 
+        return positionRect;
     }
 
     function RegisterEvents(success, fail) {
