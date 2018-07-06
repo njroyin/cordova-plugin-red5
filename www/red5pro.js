@@ -20,6 +20,7 @@ var red5promobile = new function () {
             _this.initOptions = options;
 
             var positionRect = GetVideoElementBounds(options.mediaElementId);
+            document.getElementById(options.mediaElementId).setAttribute('style', 'display:none');
 
             var initArray = [
                 positionRect.x,
@@ -33,7 +34,8 @@ var red5promobile = new function () {
                 options.bandwidth.video,
                 options.frameRate,
                 options.licenseKey,
-                options.debugView || false
+                options.debugView || false,
+                options.renderBelow || false
             ];
             exec(success, fail, PLUGIN_NAME, 'initPublisher', initArray);
         };
@@ -71,6 +73,7 @@ var red5promobile = new function () {
             _this.initOptions = options;
 
             var positionRect = GetVideoElementBounds(options.mediaElementId);
+            document.getElementById(options.mediaElementId).setAttribute('style', 'display:none');
 
             var initArray = [
                 positionRect.x,
@@ -85,7 +88,8 @@ var red5promobile = new function () {
                 options.frameRate,
                 options.licenseKey,
                 options.debugView || false,
-                streamName
+                streamName,
+                options.renderBelow || false
             ];
             exec(success, fail, PLUGIN_NAME, 'subscribe', initArray);
         };

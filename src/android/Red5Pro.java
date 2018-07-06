@@ -48,6 +48,10 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     volatile private boolean isStreaming = false; // Either receiving or sending video
     private int cameraOrientation;
     private boolean isPreviewing = false;
+    private boolean playBehindWebview = false;
+
+    CordovaInterface cordovaInterface;
+    CordovaWebView cordovaWebView;
 
     // Red5 Classes
     private R5VideoView videoView;
@@ -91,6 +95,9 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         super.initialize(cordova, webView);
 
         layout = (FrameLayout) webView.getView().getParent();
+
+        cordovaInterface = cordova;
+        cordovaWebView = webView;
 
         if (!checkForPermissions()) {
             cordova.requestPermissions(this, 0, permissions);
@@ -175,6 +182,13 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         videoView.setLayoutParams(params);
         videoView.setBackgroundColor(Color.BLACK);
         layout.addView(videoView);
+
+        if (playBehindWebview) {
+            webView.getView().setBackgroundColor(Color.TRANSPARENT);
+            cordovaWebView.getView().bringToFront();
+        } else {
+            webView.getView().setBackgroundColor(Color.WHITE);
+        }
     }
 
     private void initiateConnection(R5Configuration configuration) {
@@ -191,7 +205,8 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
         final ArgumentTypes[] types = {ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT,
                 ArgumentTypes.STRING, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.INT,
-                ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.BOOLEAN};
+                ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.BOOLEAN,
+                ArgumentTypes.BOOLEAN};
         if (!validateArguments(args, types)) {
             callbackContext.error("Invalid arguments given");
             return;
@@ -240,6 +255,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
         String licenseKey = args.getString(10);
         boolean showDebugView = args.getBoolean(11);
+        playBehindWebview = args.getBoolean(12);
 
         R5Configuration configuration = new R5Configuration(R5StreamProtocol.RTSP, host, portNumber, appName, 1.0f);
         configuration.setLicenseKey(licenseKey);
@@ -332,7 +348,8 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
         final ArgumentTypes[] types = {ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT,
                 ArgumentTypes.STRING, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.INT,
-                ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.BOOLEAN, ArgumentTypes.STRING};
+                ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.BOOLEAN, ArgumentTypes.STRING,
+                ArgumentTypes.BOOLEAN};
         if (!validateArguments(args, types)) {
             callbackContext.error("Invalid arguments given");
             return;
@@ -382,6 +399,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         String licenseKey = args.getString(10);
         boolean showDebugView = args.getBoolean(11);
         String streamName = args.getString(12);
+        playBehindWebview = args.getBoolean(13);
 
         R5Configuration configuration = new R5Configuration(R5StreamProtocol.RTSP, host, portNumber, appName, 1.0f);
         configuration.setLicenseKey(licenseKey);
