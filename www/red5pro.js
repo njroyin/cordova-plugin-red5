@@ -7,7 +7,6 @@ var red5promobile = new function () {
     this.Publisher = function () {
 
         var initOptions = {};
-        var _this = this;
 
         // Common functions
         this.resize = Resize;
@@ -17,7 +16,7 @@ var red5promobile = new function () {
 
         this.init = function (options, success, fail) {
 
-            _this.initOptions = options;
+            initOptions = options;
 
             var positionRect = GetVideoElementBounds(options.mediaElementId);
             document.getElementById(options.mediaElementId).setAttribute('style', 'display:none');
@@ -45,6 +44,8 @@ var red5promobile = new function () {
         };
 
         this.unpublish = function (success, fail) {
+            if (initOptions.mediaElementId !== undefined)
+                document.getElementById(initOptions.mediaElementId).setAttribute('style', 'display:inherit');
             exec(success, fail, PLUGIN_NAME, 'unpublish', []);
         };
 
@@ -53,14 +54,13 @@ var red5promobile = new function () {
         };
 
         this.getOptions = function () {
-            return _this.initOptions;
+            return initOptions;
         };
     };
 
     this.Subscriber = function () {
 
         var initOptions = {};
-        var _this = this;
 
         // Common functions
         this.resize = Resize;
@@ -70,7 +70,7 @@ var red5promobile = new function () {
 
         this.subscribe = function (options, streamName, success, fail) {
 
-            _this.initOptions = options;
+            initOptions = options;
 
             var positionRect = GetVideoElementBounds(options.mediaElementId);
             document.getElementById(options.mediaElementId).setAttribute('style', 'display:none');
@@ -95,11 +95,13 @@ var red5promobile = new function () {
         };
 
         this.unsubscribe = function (success, fail) {
+            if (initOptions.mediaElementId !== undefined)
+                document.getElementById(initOptions.mediaElementId).setAttribute('style', 'display:inhert');
             exec(success, fail, PLUGIN_NAME, 'unsubscribe', []);
         };
 
         this.getOptions = function () {
-            return _this.initOptions;
+            return initOptions;
         };
 
     };
@@ -113,13 +115,7 @@ var red5promobile = new function () {
             return;
         }
 
-        var positionRect = mediaElement.getBoundingClientRect();
-        positionRect.x *= window.devicePixelRatio; // Scale up to device true resolution
-        positionRect.y *= window.devicePixelRatio;
-        positionRect.width *= window.devicePixelRatio;
-        positionRect.height *= window.devicePixelRatio;
-
-        return positionRect;
+        return mediaElement.getBoundingClientRect();
     }
 
     function RegisterEvents(success, fail) {
@@ -146,11 +142,6 @@ var red5promobile = new function () {
                 height = Math.min(Math.max(height, 0.0), 1.0);
                 height *= window.outerHeight;
             }
-
-            xPos *= window.devicePixelRatio;
-            yPos *= window.devicePixelRatio;
-            width *= window.devicePixelRatio;
-            height *= window.devicePixelRatio;
 
             exec(null, null, PLUGIN_NAME, 'resize', [xPos, yPos, width, height]);
         }

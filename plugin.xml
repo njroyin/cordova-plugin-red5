@@ -46,6 +46,14 @@
             </feature>
         </config-file>
 
+        <edit-config target="NSCameraUsageDescription" file="*-Info.plist" mode="merge">
+            <string>Camera used for video publishing.</string>
+        </edit-config>
+
+        <edit-config target="NSMicrophoneUsageDescription" file="*-Info.plist" mode="merge">
+            <string>Microphone used for audio publishing.</string>
+        </edit-config>
+
         <header-file src="src/ios/red5pro.h" />
         <source-file src="src/ios/red5pro.m" />
     </platform>
