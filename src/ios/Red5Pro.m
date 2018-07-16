@@ -429,8 +429,12 @@
 
 -(void)onR5StreamStatus:(R5Stream *)stream withStatus:(int) statusCode withMessage:(NSString*)msg
 {
-    NSLog(@"Received event %i with status message %@", statusCode, msg);
-    [self sendEventMessage:[NSString stringWithFormat:@"%i:%@",statusCode,msg ]];
+    NSLog(@"Received event %@ with status message %@", @(r5_string_for_status(statusCode)), msg);
+    
+    // Now we need to convert Status Code to an all upper case string with _ for spaces. This matches how the
+    // android event status code text is and we want them to be uniform.
+    NSString *eventName = GetStatusStringFromCode(statusCode);
+    [self sendEventMessage:[NSString stringWithFormat:@"{ \"type\" : \"%@\", \"data\" : \"%@\"}",eventName, msg]];
     
     NSString *tmpStreamName = _streamName;
     
@@ -439,41 +443,12 @@
     }
     
     dispatch_async(dispatch_get_main_queue(), ^{
-        
-//        if (_isPublisher) {
-//            self.onPublisherStreamStatus(@{
-//                                           @"status": @{
-//                                                   @"code": @(statusCode),
-//                                                   @"message": msg,
-//                                                   @"name": @(r5_string_for_status(statusCode)),
-//                                                   @"streamName": tmpStreamName
-//                                                   }
-//                                           });
-//        }
-//        else {
-//            self.onSubscriberStreamStatus(@{
-//                                            @"status": @{
-//                                                    @"code": @(statusCode),
-//                                                    @"message": msg,
-//                                                    @"name": @(r5_string_for_status(statusCode)),
-//                                                    @"streamName": tmpStreamName
-//                                                    }
-//                                            });
-//        }
-        
+       
         if (statusCode == r5_status_disconnected && _isStreaming) {
-            if (!_isPublisher) {
-//                self.onUnsubscribeNotification(@{});
-            }
-            else if (_isPublisher) {
-  //              self.onUnpublishNotification(@{});
-            }
             [self tearDown];
             _isStreaming = NO;
         }
-        
     });
-    
 }
 
 -(void)sendEventMessage:(NSString*)message
@@ -483,6 +458,18 @@
         pluginResult.keepCallback = [NSNumber numberWithBool:true];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:eventCallbackId];
     }
+}
+
+NSString * GetStatusStringFromCode(int code)
+{
+    NSArray *statusStringArray = @[ @"CONNECTED", @"DISCONNECTED", @"ERROR", @"TIMEOUT", @"CLOSE", @"START_STREAMING", @"STOP_STREAMING",
+                                    @"NET_STATUS", @"AUDIO_MUTE", @"AUDIO_UNMUTE", @"VIDEO_MUTE", @"VIDEO_UNMUTE", @"LICENSE_ERROR",
+                                    @"LICENSE_VALID", @"BUFFER_FLUSH_START", @"BUFFER_FLUSH_EMPTY", @"VIDEO_RENDER_START" ];
+    
+    if (code < 0 || code >= [statusStringArray count] )
+        return @"UNKNOWN";
+    
+    return statusStringArray[code];
 }
 
 CGFloat AACStatusBarHeight()

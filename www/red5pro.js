@@ -10,8 +10,6 @@ var red5promobile = new function () {
 
         // Common functions
         this.resize = Resize;
-        this.registerEvents = RegisterEvents;
-        this.unregisterEvents = UnregisterEvents;
         this.updateScaleMode = UpdateScaleMode;
 
         this.init = function (options, success, fail) {
@@ -49,6 +47,19 @@ var red5promobile = new function () {
             exec(success, fail, PLUGIN_NAME, 'unpublish', []);
         };
 
+        this.registerEvents = function (success, fail) {
+            (function(callback) {
+                exec(function(event) {
+                    var eventJson = JSON.parse(event);
+                    callback(eventJson);
+                }, fail, PLUGIN_NAME, 'registerEvents', []);
+            })(success);
+        }
+
+        this.unregisterEvents = function (success, fail) {
+            exec(null, null, PLUGIN_NAME, 'unregisterEvents', []);
+        }
+
         this.swapCamera = function (success, fail) {
             exec(success, fail, PLUGIN_NAME, 'swapCamera', []);
         };
@@ -64,8 +75,6 @@ var red5promobile = new function () {
 
         // Common functions
         this.resize = Resize;
-        this.registerEvents = RegisterEvents;
-        this.unregisterEvents = UnregisterEvents;
         this.updateScaleMode = UpdateScaleMode;
 
         this.subscribe = function (options, streamName, success, fail) {
@@ -100,6 +109,19 @@ var red5promobile = new function () {
             exec(success, fail, PLUGIN_NAME, 'unsubscribe', []);
         };
 
+        this.registerEvents = function (success, fail) {
+            (function(callback) {
+                exec(function(event) {
+                    var eventJson = JSON.parse(event);
+                    callback(eventJson);
+                }, fail, PLUGIN_NAME, 'registerEvents', []);
+            })(success);
+        }
+
+        this.unregisterEvents = function (success, fail) {
+            exec(null, null, PLUGIN_NAME, 'unregisterEvents', []);
+        }
+
         this.getOptions = function () {
             return initOptions;
         };
@@ -116,14 +138,6 @@ var red5promobile = new function () {
         }
 
         return mediaElement.getBoundingClientRect();
-    }
-
-    function RegisterEvents(success, fail) {
-        exec(success, fail, PLUGIN_NAME, 'registerEvents', []);
-    }
-
-    function UnregisterEvents() {
-        exec(null, null, PLUGIN_NAME, 'unregisterEvents', []);
     }
 
     function Resize(xPos, yPos, width, height, actualPixels) {
