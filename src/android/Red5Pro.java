@@ -12,6 +12,7 @@ import org.json.JSONException;
 import java.lang.Runnable;
 
 import android.Manifest;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.hardware.Camera;
@@ -165,7 +166,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
         Log.d("R5VideoViewLayout", ":onConnectionEvent " + event.name());
 
-        sendEventMessage(event.name() + ':' + event.message);
+        sendEventMessage("{ \"type\" : \"" + event.name() + "\", \"data\" : \"" + event.message + "\" }");
 
         if (event == R5ConnectionEvent.START_STREAMING) {
             isStreaming = true;
@@ -240,11 +241,11 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
         isPublisher = true;
 
-        // Pull out all the parameters passed in
-        int xPos = args.getInt(0);
-        int yPos = args.getInt(1);
-        int width = args.getInt(2);
-        int height = args.getInt(3);
+        // Pull out all the parameters passed in, make note positions are in device independent (dp) units
+        int xPos = dpToPx(args.getInt(0));
+        int yPos = dpToPx(args.getInt(1));
+        int width = dpToPx(args.getInt(2));
+        int height = dpToPx(args.getInt(3));
 
         String host = args.getString(4);
         int portNumber = args.getInt(5);
@@ -298,7 +299,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 videoView.setLayoutParams(params);
                 layout.requestLayout();
 
-                sendEventMessage("PREVIEWING");
                 isPreviewing = true;
 
                 callbackContext.success();
@@ -383,11 +383,11 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
         isSubscriber = true;
 
-        // Pull out all the parameters passed in
-        int xPos = args.getInt(0);
-        int yPos = args.getInt(1);
-        int width = args.getInt(2);
-        int height = args.getInt(3);
+        // Pull out all the parameters passed in, make note positions are in device independent (dp) units
+        int xPos = dpToPx(args.getInt(0));
+        int yPos = dpToPx(args.getInt(1));
+        int width = dpToPx(args.getInt(2));
+        int height = dpToPx(args.getInt(3));
 
         String host = args.getString(4);
         int portNumber = args.getInt(5);
@@ -429,9 +429,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 params.setMargins(xPos, yPos, 0, 0);
                 videoView.setLayoutParams(params);
                 layout.requestLayout();
-
-                //sendEventMessage("SUBSCRIBING");
-                //isPreviewing = true;
 
                 callbackContext.success();
             }
@@ -744,5 +741,15 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         cameraOrientation += degrees;
 
         cameraOrientation = cameraOrientation % 360;
+    }
+
+    private int dpToPx(int dp)
+    {
+        return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
+    }
+
+    private static int pxToDp(int px)
+    {
+        return (int) (px / Resources.getSystem().getDisplayMetrics().density);
     }
 }

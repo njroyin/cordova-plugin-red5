@@ -50,10 +50,12 @@ To register for events call the appropriate registerEvents function on either th
 
 Each event is returned as a JSON object with the following structure:
 
+```
 {
-'type' : 'EVENT_TYPE',
-'data' : 'EVENT_DATA'
+"type" : "EVENT_TYPE",
+"data" : "EVENT_DATA"
 }
+```
 
 Below is the list of events that get generated.
 
@@ -77,6 +79,19 @@ Below is the list of events that get generated.
 | BUFFER_FLUSH_END  |  N/A |
 |  VIDEO_RENDER_START | N/A  |
 
+
+## Rendering Video Above/Below
+
+With this cordova plugin you can choose whether you want the video view to render above or below the webview. This works on both Android and IOS and is controlled by one of the options variables when calling `init()` on publisher or `subscribe` on the subscriber objects respectively. For example:
+
+```javascript
+var options = {
+    ...
+    renderBelow: true, // default or if missing is false
+}
+```
+
+In order to actually view the rendered video below you will need to set the background-color for the `<body>` element to transparent along with any other items that might be above the video window.
 
 # Gotchas
 When removing the plugin it leaves behind libraries in the jniLibs folder. You either need to delete this folder if re-installing this plugin or you need to remove your platform and re-add it.
