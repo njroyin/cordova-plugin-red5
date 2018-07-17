@@ -1,6 +1,7 @@
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include "TargetConditionals.h"
+#include <AVFoundation/AVFoundation.h>
 
 #import <Cordova/CDV.h>
 #import "red5pro.h"
@@ -61,8 +62,8 @@
 }
 
 #pragma mark Helper Functions
-- (AVCaptureDevice *)getCameraDevice:(BOOL)backfacing {
-    
+- (AVCaptureDevice *)getCameraDevice:(BOOL)backfacing
+{
     NSArray *list = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
     AVCaptureDevice *frontCamera;
     AVCaptureDevice *backCamera;
@@ -82,7 +83,8 @@
     
 }
 
-- (R5Microphone *)setUpMicrophone {
+- (R5Microphone *)setUpMicrophone
+{
     AVCaptureDevice *audio = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeAudio];
     R5Microphone *microphone = [[R5Microphone alloc] initWithDevice:audio];
     microphone.bitrate = _audioBitrate;
@@ -90,7 +92,8 @@
     return microphone;
 }
 
-- (R5Camera *)setUpCamera {
+- (R5Camera *)setUpCamera
+{
     AVCaptureDevice *video = [self getCameraDevice:_useBackfacingCamera];
     R5Camera *camera = [[R5Camera alloc] initWithDevice:video andBitRate:_bitrate];
     [camera setWidth:_cameraWidth];
@@ -98,6 +101,87 @@
     [camera setOrientation:90];
     [camera setFps:_framerate];
     return camera;
+}
+
+- (void)showAlert:(NSString *)title withMessage:(NSString *)message
+{
+    UIAlertController * alert = [UIAlertController
+                                 alertControllerWithTitle:title
+                                 message:message
+                                 preferredStyle:UIAlertControllerStyleAlert];
+    
+    
+    
+    UIAlertAction* okButton = [UIAlertAction
+                               actionWithTitle:@"Ok"
+                               style:UIAlertActionStyleDefault
+                               handler:^(UIAlertAction * action) {
+                                   //Handle your yes please button action here
+                               }];
+    
+    [alert addAction:okButton];
+    
+    id rootViewController = [UIApplication sharedApplication].delegate.window.rootViewController;
+    if([rootViewController isKindOfClass:[UINavigationController class]])
+        rootViewController = ((UINavigationController *)rootViewController).viewControllers.firstObject;
+    
+    if([rootViewController isKindOfClass:[UITabBarController class]])
+        rootViewController = ((UITabBarController *)rootViewController).selectedViewController;
+    
+    [rootViewController presentViewController:alert animated:YES completion:nil];
+}
+
+- (void)deviceDeniedError
+{
+    NSLog(@"Denied access to device");
+    
+    NSString *alertText;
+    
+    alertText = @"It looks like your privacy settings are preventing us from accessing your camera or microphone for video presenting. You can fix this by doing the following:\n\n1. Close this app.\n\n2. Open the Settings app.\n\n3. Scroll to the privacy section and select Camera or Microphone.\n\n4. Turn the Camera and Microphone on for this app.\n\n5. Open this app and try again.";
+    
+    [self showAlert:@"Permission Error" withMessage:alertText];
+    
+//    UIAlertView *alert = [[UIAlertView alloc]
+//                          initWithTitle:@"Error"
+//                          message:alertText
+//                          delegate:self
+//                          cancelButtonTitle:alertButton
+//                          otherButtonTitles:nil];
+//    alert.tag = 3491832;
+//    [alert show];
+    
+    
+
+}
+
+- (BOOL)verifyMediaAuthorization:(NSString *)mediaType
+{
+    AVAuthorizationStatus authStatus = [AVCaptureDevice authorizationStatusForMediaType:mediaType];
+    if(authStatus == AVAuthorizationStatusAuthorized) {
+        return TRUE;
+    } else if(authStatus == AVAuthorizationStatusDenied){
+        [self deviceDeniedError];
+        return FALSE;
+    } else if(authStatus == AVAuthorizationStatusRestricted){
+        // It means their ADMIN locked them out. Not likely to happen
+        [self deviceDeniedError];
+        return FALSE;
+    } else if(authStatus == AVAuthorizationStatusNotDetermined){
+        // not determined?!
+        [AVCaptureDevice requestAccessForMediaType:mediaType completionHandler:^(BOOL granted) {
+            if(granted){
+                NSLog(@"Granted access to %@", mediaType);
+            } else {
+                NSLog(@"Not granted access to %@", mediaType);
+                [self deviceDeniedError];
+            }
+        }];
+    } else {
+        // impossible, unknown authorization status
+        return FALSE;
+    }
+    
+    return FALSE;
 }
 
 - (void)onDeviceOrientation:(NSNotification *)notification {
@@ -174,6 +258,13 @@
     _showDebugInfo = ((NSNumber*)[command.arguments objectAtIndex:11]).boolValue;
     bool playBehindWebview = ((NSNumber*)[command.arguments objectAtIndex:12]).boolValue;
     
+    if ([self verifyMediaAuthorization:AVMediaTypeVideo] == FALSE || [self verifyMediaAuthorization:AVMediaTypeAudio] == FALSE) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing Authorization."];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        return;
+    }
+
+    
     R5Configuration *configuration = [[R5Configuration alloc] init];
     configuration.protocol = 1;
     configuration.host = host;
@@ -185,6 +276,7 @@
     configuration.buffer_time = 1.0f;
     configuration.stream_buffer_time = 1.0f;
     configuration.parameters = @"";
+   
     
     dispatch_async(dispatch_get_main_queue(), ^{
         _isPublisher = YES;
