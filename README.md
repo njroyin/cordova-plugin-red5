@@ -42,20 +42,23 @@ Each function that publisher and subscriber implements follows the format of:
 
 where the options argument may or may not exist and we have success and fail callbacks. Since subscribing and publishing video to red5 pro server is an asynchronous process with the real possibility that a connection could be severed at any time we have implement an events mechanism for see the true status and state of the publisher and subscriber.
 
-For example when you call `publisher.init()` with invalid arguments the fail function will be called immediately with an error string indicating what is wrong. However if all options are correct the cordova plugin will **attempt** a connection and return success immediately before the attempt has determined if it was successful or not. Thus it important to register and listen to events.
+For example when you call `publisher.init()` with invalid arguments the fail function will be called **immediately** with an error string indicating what is wrong. However if all options are correct the cordova plugin will **attempt** a connection and return success immediately before the attempt has determined if it was successful or not. Thus it important to register and listen to events.
 
 ## Events
 
-To register for events call the appropriate registerEvents function on either the publisher or subscriber. Likewise you can call unregisterEvents. You can only have one callback associated with the registerEvents function. It will be continously called with any new events.
+Since callbacks return as soon as possible it is important to register and listen to events to know the true status. To register for events call the appropriate registerEvents function on either the publisher or subscriber. Likewise you can call unregisterEvents. You can only have one callback associated with the registerEvents function. It will be continously called with any new events.
 
 Each event is returned as a JSON object with the following structure:
 
 ```
 {
 "type" : "EVENT_TYPE",
-"data" : "EVENT_DATA"
+"data" : "EVENT_DATA",
+"original_type" : "HTML_TYPE" // Not set for native, HTML SDK set to the original type for additional details
 }
 ```
+
+To account for differences between HTML and Native SDKs and for future events that may be added, we have added the "OTHER" event type as well as the **original_type** key. In this case the event JSON key of original_type will be set with the event name received and data key populated with whatever is returned.
 
 Below is the list of events that get generated.
 
@@ -78,6 +81,7 @@ Below is the list of events that get generated.
 | BUFFER_FLUSH_START  | N/A  |
 | BUFFER_FLUSH_END  |  N/A |
 |  VIDEO_RENDER_START | N/A  |
+|  OTHER | dependent  |
 
 
 ## Rendering Video Above/Below
