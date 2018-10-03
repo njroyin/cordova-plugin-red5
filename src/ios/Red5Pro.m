@@ -59,6 +59,14 @@
     r5_set_log_level(_logLevel);
     
     _playBehindWebview = false;
+
+    if ([self verifyMediaAuthorization:AVMediaTypeVideo] == FALSE) {
+        NSLog(@"Error getting video permissions");
+    }
+    
+    if ([self verifyMediaAuthorization:AVMediaTypeAudio] == FALSE) {
+        NSLog(@"Error getting audio mic permissions.");
+    }
 }
 
 #pragma mark Helper Functions
@@ -224,7 +232,6 @@
 
 - (void)initiateConnection:(R5Configuration *)configuration
 {
-    //  dispatch_async(dispatch_get_main_queue(), ^{
     R5Connection *connection = [[R5Connection alloc] initWithConfig:configuration];
     R5Stream *stream = [[R5Stream alloc] initWithConnection:connection];
     [stream setDelegate:self];
@@ -232,11 +239,6 @@
     
     self.stream = stream;
     self.connection = connection;
-    
-    //        if (self.onConfigured) {
-    //            self.onConfigured(@{@"key": key});
-    //        }
-    //    });
 }
 
 #pragma mark Publisher
@@ -270,7 +272,7 @@
     configuration.host = host;
     configuration.port = port;
     configuration.contextName = appName;
-    configuration.streamName = @"josh";
+    configuration.streamName = @"stream_no_name";
     configuration.bundleID = @"";
     configuration.licenseKey = licenseKey;
     configuration.buffer_time = 1.0f;
@@ -311,12 +313,13 @@
                 [self.webView addSubview:view];
             }
             
+            [self.stream attachVideo:camera];
+            [self.controller attachStream:self.stream];
+            
             [self.controller showPreview:YES];
             [self.controller showDebugInfo:_showDebugInfo];
             [self.controller setScaleMode:_scaleMode];
             
-            [self.controller attachStream:self.stream];
-            [self.stream attachVideo:camera];
         }
     });
     

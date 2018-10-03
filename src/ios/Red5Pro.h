@@ -7,7 +7,7 @@
 @property R5Connection *connection;
 @property R5VideoViewController *controller;
 
-#pragma mark Java Interface
+#pragma mark Javascript Interface
 - (void)initPublisher:(CDVInvokedUrlCommand*)command;
 - (void)publish:(CDVInvokedUrlCommand*)command;
 - (void)unpublish:(CDVInvokedUrlCommand*)command;
