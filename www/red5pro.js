@@ -54,11 +54,11 @@ var red5promobile = new function () {
                     callback(eventJson);
                 }, fail, PLUGIN_NAME, 'registerEvents', []);
             })(success);
-        }
+        };
 
         this.unregisterEvents = function (success, fail) {
             exec(null, null, PLUGIN_NAME, 'unregisterEvents', []);
-        }
+        };
 
         this.swapCamera = function (success, fail) {
             exec(success, fail, PLUGIN_NAME, 'swapCamera', []);

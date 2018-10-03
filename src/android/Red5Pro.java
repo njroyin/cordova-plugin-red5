@@ -12,6 +12,7 @@ import org.json.JSONException;
 import java.lang.Runnable;
 
 import android.Manifest;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.hardware.Camera;
@@ -42,9 +43,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     private CallbackContext eventCallbackContext;
 
     // State management
-    protected String streamName;
-    private boolean isPublisher = false;
-    private boolean isSubscriber = false;
     volatile private boolean isStreaming = false; // Either receiving or sending video
     private int cameraOrientation;
     private boolean isPreviewing = false;
@@ -163,9 +161,9 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     @Override
     public void onConnectionEvent(R5ConnectionEvent event) {
 
-        Log.d("R5VideoViewLayout", ":onConnectionEvent " + event.name());
+        Log.d("R5Cordova", ":onConnectionEvent " + event.name());
 
-        sendEventMessage(event.name() + ':' + event.message);
+        sendEventMessage("{ \"type\" : \"" + event.name() + "\", \"data\" : \"" + event.message + "\" }");
 
         if (event == R5ConnectionEvent.START_STREAMING) {
             isStreaming = true;
@@ -238,13 +236,13 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
             }
         }
 
-        isPublisher = true;
-
-        // Pull out all the parameters passed in
-        int xPos = args.getInt(0);
-        int yPos = args.getInt(1);
-        int width = args.getInt(2);
-        int height = args.getInt(3);
+        // Pull out all the parameters passed in, make note positions are in device independent (dp) units
+        int xPos = dpToPx(args.getInt(0));
+        int yPos = dpToPx(args.getInt(1));
+        int captureWidth = args.getInt(2);
+        int captureHeight = args.getInt(3);
+        int screenWidth = dpToPx(captureWidth);
+        int screenHeight = dpToPx(captureHeight);
 
         String host = args.getString(4);
         int portNumber = args.getInt(5);
@@ -263,7 +261,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
         initiateConnection(configuration);
 
-        stream.setScaleMode(2); // Does NOT work....bug in SDK...you must be publishing for it to work
+        stream.setScaleMode(0);
 
         stream.audioController.sampleRate = 44100;
 
@@ -278,10 +276,12 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 Camera cam = openFrontFacingCameraGingerbread();
                 cam.setDisplayOrientation((cameraOrientation + 180) % 360);
 
-                camera = new R5Camera(cam, 640, 360);
+                camera = new R5Camera(cam, captureWidth, captureHeight);
                 camera.setBitrate(videoBandwidth);
                 camera.setOrientation(cameraOrientation);
                 camera.setFramerate(frameRate);
+
+                Log.d("R5Cordova", "Camera width, height: " + Integer.toString(camera.getWidth()) + "," + Integer.toString(camera.getHeight()));
 
                 mic = new R5Microphone();
                 stream.attachMic(mic);
@@ -293,12 +293,11 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
                 cam.startPreview();
 
-                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(width, height);
+                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(screenWidth, screenHeight);
                 params.setMargins(xPos, yPos, 0, 0);
                 videoView.setLayoutParams(params);
                 layout.requestLayout();
 
-                sendEventMessage("PREVIEWING");
                 isPreviewing = true;
 
                 callbackContext.success();
@@ -381,13 +380,11 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
             }
         }
 
-        isSubscriber = true;
-
-        // Pull out all the parameters passed in
-        int xPos = args.getInt(0);
-        int yPos = args.getInt(1);
-        int width = args.getInt(2);
-        int height = args.getInt(3);
+        // Pull out all the parameters passed in, make note positions are in device independent (dp) units
+        int xPos = dpToPx(args.getInt(0));
+        int yPos = dpToPx(args.getInt(1));
+        int width = dpToPx(args.getInt(2));
+        int height = dpToPx(args.getInt(3));
 
         String host = args.getString(4);
         int portNumber = args.getInt(5);
@@ -408,7 +405,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
         initiateConnection(configuration);
 
-        stream.setScaleMode(2); // Does NOT work....bug in SDK...you must be publishing for it to work
+        stream.setScaleMode(0); // Does NOT work....bug in SDK...you must be publishing for it to work
 
         stream.audioController.sampleRate = 44100;
 
@@ -429,9 +426,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 params.setMargins(xPos, yPos, 0, 0);
                 videoView.setLayoutParams(params);
                 layout.requestLayout();
-
-                //sendEventMessage("SUBSCRIBING");
-                //isPreviewing = true;
 
                 callbackContext.success();
             }
@@ -480,7 +474,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
     private void cleanup() {
 
-        Log.d("R5VideoViewLayout", ":cleanup (" + "stream" + ")!");
+        Log.d("R5Cordova", ":cleanup (" + "stream" + ")!");
         if (stream != null) {
             stream.client = null;
             stream.setListener(null);
@@ -543,12 +537,17 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
             return;
         }
 
+        // The scale modes are as follows:
+        // 0 = r5_scale_to_fill = scale to fill and maintain aspect ratio (cropping will occur)
+        // 1 = r5_scale_to_fit: scale to fit inside view (letterboxing will occur)
+        // 2 = r5_scale_fill: scale to fill view (will not respect aspect ratio of video)
         int scaleMode = args.getInt(0);
-
         if (scaleMode < 0 || scaleMode >= 3) {
             callbackContext.error("Invalid scale mode given");
             return;
         }
+
+        Log.d("R5Cordova", "Setting scale mode to: " + Integer.toString(scaleMode));
 
         cordova.getActivity().runOnUiThread(new Runnable() {
             public void run() {
@@ -648,10 +647,9 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     }
 
     private Camera openFrontFacingCameraGingerbread() {
-        int cameraCount = 0;
         Camera cam = null;
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-        cameraCount = Camera.getNumberOfCameras();
+        int cameraCount = Camera.getNumberOfCameras();
         for (int camIdx = 0; camIdx < cameraCount; camIdx++) {
             Camera.getCameraInfo(camIdx, cameraInfo);
             if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
@@ -674,7 +672,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         Camera cam = null;
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         cameraCount = Camera.getNumberOfCameras();
-        System.out.println("Number of cameras: " + cameraCount);
+        Log.d("R5Cordova", "Number of cameras: " + cameraCount);
         for (int camIdx = 0; camIdx < cameraCount; camIdx++) {
             Camera.getCameraInfo(camIdx, cameraInfo);
             if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
@@ -744,5 +742,15 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         cameraOrientation += degrees;
 
         cameraOrientation = cameraOrientation % 360;
+    }
+
+    private int dpToPx(int dp)
+    {
+        return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
+    }
+
+    private static int pxToDp(int px)
+    {
+        return (int) (px / Resources.getSystem().getDisplayMetrics().density);
     }
 }
