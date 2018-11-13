@@ -1,4 +1,3 @@
-
 package com.red5pro;
 
 import org.apache.cordova.CordovaWebView;
@@ -489,6 +488,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         if (videoView != null) {
             cordova.getActivity().runOnUiThread(new Runnable() {
                 public void run() {
+                    if (videoView == null) return;
                     videoView.attachStream(null);
                     layout.removeView(videoView);
                     layout.requestLayout();
