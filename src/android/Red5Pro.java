@@ -1,4 +1,3 @@
-
 package com.red5pro;
 
 import org.apache.cordova.CordovaWebView;
@@ -133,6 +132,18 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 return true;
             case "unsubscribe":
                 this.unsubscribe(callbackContext);
+                return true;
+            case "pauseVideo":
+                this.pauseVideo(callbackContext);
+                return true;
+            case "unpauseVideo":
+                this.unpauseVideo(callbackContext);
+                return true;
+            case "pauseAudio":
+                this.pauseAudio(callbackContext);
+                return true;
+            case "unpauseAudio":
+                this.unpauseAudio(callbackContext);
                 return true;
             case "resize":
                 resize(args, callbackContext);
@@ -450,6 +461,58 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         callbackContext.success();
     }
 
+
+    private void pauseVideo(CallbackContext callbackContext) {
+
+        if (isPreviewing == false || isStreaming == false || stream == null) {
+            callbackContext.error("Not publishing video");
+            return;
+        }
+
+        stream.restrainVideo(true);
+
+        callbackContext.success();
+    }
+
+
+    private void unpauseVideo(CallbackContext callbackContext) {
+
+        if (isPreviewing == false || isStreaming == false || stream == null) {
+            callbackContext.error("Not publishing video");
+            return;
+        }
+
+        stream.restrainVideo(false);
+
+        callbackContext.success();
+    }
+
+
+    private void pauseAudio(CallbackContext callbackContext) {
+
+        if (isPreviewing == false || isStreaming == false || stream == null) {
+            callbackContext.error("Not publishing video");
+            return;
+        }
+
+        stream.restrainAudio(true);
+
+        callbackContext.success();
+    }
+
+
+    private void unpauseAudio(CallbackContext callbackContext) {
+
+        if (isPreviewing == false || isStreaming == false || stream == null) {
+            callbackContext.error("Not publishing video");
+            return;
+        }
+
+        stream.restrainAudio(false);
+
+        callbackContext.success();
+    }
+
     private void stopPreviewAndStreaming() {
 
         if (videoView != null) {
@@ -489,6 +552,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         if (videoView != null) {
             cordova.getActivity().runOnUiThread(new Runnable() {
                 public void run() {
+                    if (videoView == null) return;
                     videoView.attachStream(null);
                     layout.removeView(videoView);
                     layout.requestLayout();
