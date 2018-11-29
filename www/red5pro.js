@@ -64,6 +64,22 @@ var red5promobile = new function () {
             exec(success, fail, PLUGIN_NAME, 'swapCamera', []);
         };
 
+        this.pauseVideo = function (success, fail) {
+            exec(success, fail, PLUGIN_NAME, 'pauseVideo', []);
+        };
+
+        this.pauseAudio = function (success, fail) {
+            exec(success, fail, PLUGIN_NAME, 'pauseAudio', []);
+        };
+
+        this.unpauseVideo = function (success, fail) {
+            exec(success, fail, PLUGIN_NAME, 'unpauseVideo', []);
+        };
+
+        this.unpauseAudio = function (success, fail) {
+            exec(success, fail, PLUGIN_NAME, 'unpauseAudio', []);
+        };
+
         this.getOptions = function () {
             return initOptions;
         };
@@ -116,11 +132,11 @@ var red5promobile = new function () {
                     callback(eventJson);
                 }, fail, PLUGIN_NAME, 'registerEvents', []);
             })(success);
-        }
+        };
 
         this.unregisterEvents = function (success, fail) {
             exec(null, null, PLUGIN_NAME, 'unregisterEvents', []);
-        }
+        };
 
         this.getOptions = function () {
             return initOptions;

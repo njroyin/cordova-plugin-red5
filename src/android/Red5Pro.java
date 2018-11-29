@@ -133,6 +133,18 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
             case "unsubscribe":
                 this.unsubscribe(callbackContext);
                 return true;
+            case "pauseVideo":
+                this.pauseVideo(callbackContext);
+                return true;
+            case "unpauseVideo":
+                this.unpauseVideo(callbackContext);
+                return true;
+            case "pauseAudio":
+                this.pauseAudio(callbackContext);
+                return true;
+            case "unpauseAudio":
+                this.unpauseAudio(callbackContext);
+                return true;
             case "resize":
                 resize(args, callbackContext);
                 return true;
@@ -445,6 +457,58 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         else {
             cleanup();
         }
+
+        callbackContext.success();
+    }
+
+
+    private void pauseVideo(CallbackContext callbackContext) {
+
+        if (isPreviewing == false || isStreaming == false || stream == null) {
+            callbackContext.error("Not publishing video");
+            return;
+        }
+
+        stream.restrainVideo(true);
+
+        callbackContext.success();
+    }
+
+
+    private void unpauseVideo(CallbackContext callbackContext) {
+
+        if (isPreviewing == false || isStreaming == false || stream == null) {
+            callbackContext.error("Not publishing video");
+            return;
+        }
+
+        stream.restrainVideo(false);
+
+        callbackContext.success();
+    }
+
+
+    private void pauseAudio(CallbackContext callbackContext) {
+
+        if (isPreviewing == false || isStreaming == false || stream == null) {
+            callbackContext.error("Not publishing video");
+            return;
+        }
+
+        stream.restrainAudio(true);
+
+        callbackContext.success();
+    }
+
+
+    private void unpauseAudio(CallbackContext callbackContext) {
+
+        if (isPreviewing == false || isStreaming == false || stream == null) {
+            callbackContext.error("Not publishing video");
+            return;
+        }
+
+        stream.restrainAudio(false);
 
         callbackContext.success();
     }
