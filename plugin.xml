@@ -56,5 +56,17 @@
 
         <header-file src="src/ios/red5pro.h" />
         <source-file src="src/ios/red5pro.m" />
+
+        <framework src="libc++.tbd" />
+        <framework src="CoreFoundation.framework" />
+        <framework src="QuartzCore.framework" />
+        <framework src="OpenAL.framework" />
+        <framework src="libiconv.2.4.0.tbd" />
+        <framework src="libz.tbd" />
+        <framework src="VideoToolbox.framework" />
+        <framework src="libbz2.1.0.tbd" />
+        <framework src="GLKit.framework" />
+        <framework src="src/ios/R5Streaming.framework" custom="true" />
+
     </platform>
 </plugin>
