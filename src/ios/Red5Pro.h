@@ -13,6 +13,10 @@
 - (void)unpublish:(CDVInvokedUrlCommand*)command;
 - (void)subscribe:(CDVInvokedUrlCommand*)command;
 - (void)unsubscribe:(CDVInvokedUrlCommand*)command;
+- (void)pauseVideo:(CDVInvokedUrlCommand*)command;
+- (void)unpauseVideo:(CDVInvokedUrlCommand*)command;
+- (void)pauseAudio:(CDVInvokedUrlCommand*)command;
+- (void)unpauseAudio:(CDVInvokedUrlCommand*)command;
 - (void)resize:(CDVInvokedUrlCommand*)command;
 - (void)updateScaleMode:(CDVInvokedUrlCommand*)command;
 

@@ -446,6 +446,58 @@
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
+- (void)pauseVideo:(CDVInvokedUrlCommand*)command
+{
+    NSLog(@"Called pause video");
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (_isStreaming)
+            self.stream.pauseVideo = true;
+    });
+    
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)unpauseVideo:(CDVInvokedUrlCommand*)command
+{
+    NSLog(@"Called unpause video");
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (_isStreaming)
+            self.stream.pauseVideo = false;
+    });
+    
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)pauseAudio:(CDVInvokedUrlCommand*)command
+{
+    NSLog(@"Called pause audio");
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (_isStreaming)
+            self.stream.pauseAudio = true;
+    });
+    
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)unpauseAudio:(CDVInvokedUrlCommand*)command
+{
+    NSLog(@"Called unpause audio");
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (_isStreaming)
+            self.stream.pauseAudio = false;
+    });
+    
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
 - (void)resize:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Called resize");
@@ -530,9 +582,7 @@
     // android event status code text is and we want them to be uniform.
     NSString *eventName = GetStatusStringFromCode(statusCode);
     [self sendEventMessage:[NSString stringWithFormat:@"{ \"type\" : \"%@\", \"data\" : \"%@\"}",eventName, msg]];
-    
-    NSString *tmpStreamName = _streamName;
-    
+      
     if (statusCode == r5_status_start_streaming) {
         _isStreaming = YES;
     }
