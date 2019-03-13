@@ -46,19 +46,24 @@ var red5promobile = new function () {
                 document.getElementById(initOptions.mediaElementId).setAttribute('style', 'display:inherit');
             exec(success, fail, PLUGIN_NAME, 'unpublish', []);
         };
-
         this.registerEvents = function (success, fail) {
-            (function(callback) {
-                exec(function(event) {
-                    var eventJson = JSON.parse(event);
-                    callback(eventJson);
-                }, fail, PLUGIN_NAME, 'registerEvents', []);
+            (function (callback) {
+              exec(function (event) {
+                console.log(event);
+                if(event && event.replace){
+                  event = event.replace(/[^\x00-\x7F]/g, "");
+                  event = event.replace('↵', "");
+                  event = event.replace('↵', "");
+                }
+                var eventJson = JSON.parse(event);
+                callback(eventJson);
+              }, fail, PLUGIN_NAME, 'registerEvents', []);
             })(success);
-        };
-
-        this.unregisterEvents = function (success, fail) {
+          }
+    
+          this.unregisterEvents = function (success, fail) {
             exec(success, fail, PLUGIN_NAME, 'unregisterEvents', []);
-        };
+          }
 
         this.swapCamera = function (success, fail) {
             exec(success, fail, PLUGIN_NAME, 'swapCamera', []);
