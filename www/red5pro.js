@@ -57,7 +57,7 @@ var red5promobile = new function () {
         };
 
         this.unregisterEvents = function (success, fail) {
-            exec(null, null, PLUGIN_NAME, 'unregisterEvents', []);
+            exec(success, fail, PLUGIN_NAME, 'unregisterEvents', []);
         };
 
         this.swapCamera = function (success, fail) {
