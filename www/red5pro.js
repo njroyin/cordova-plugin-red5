@@ -50,6 +50,9 @@ var red5promobile = new function () {
         this.registerEvents = function (success, fail) {
             (function(callback) {
                 exec(function(event) {
+                    if (event && event.replace) {
+                         event = event.replace('\r\n', '');
+                    }
                     var eventJson = JSON.parse(event);
                     callback(eventJson);
                 }, fail, PLUGIN_NAME, 'registerEvents', []);
