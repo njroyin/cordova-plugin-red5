@@ -129,18 +129,6 @@ var red5promobile = new function () {
             exec(success, fail, PLUGIN_NAME, 'unsubscribe', []);
         };
 
-        this.registerEvents = function (success, fail) {
-            (function(callback) {
-                exec(function(event) {
-                    var eventJson = JSON.parse(event);
-                    callback(eventJson);
-                }, fail, PLUGIN_NAME, 'registerEvents', []);
-            })(success);
-        };
-
-        this.unregisterEvents = function (success, fail) {
-            exec(null, null, PLUGIN_NAME, 'unregisterEvents', []);
-        };
 
         this.getOptions = function () {
             return initOptions;
