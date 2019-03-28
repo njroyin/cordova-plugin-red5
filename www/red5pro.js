@@ -52,8 +52,7 @@ var red5promobile = new function () {
 					console.log(event);
 					if (event && event.replace) {
 						event = event.replace(/[^\x00-\x7F]/g, "");
-						event = event.replace('↵', "");
-						event = event.replace('↵', "");
+						event = event.replace('\r\n', '').replace('\r\n', '')
 					}
 					var eventJson = JSON.parse(event);
 					callback(eventJson);
@@ -134,8 +133,7 @@ var red5promobile = new function () {
 				exec(function (event) {
 					if (event && event.replace) {
 						event = event.replace(/[^\x00-\x7F]/g, "");
-						event = event.replace('↵', "");
-						event = event.replace('↵', "");
+						event = event.replace('\r\n', '').replace('\r\n', '');
 					}
 					var eventJson = JSON.parse(event);
 					callback(eventJson);
