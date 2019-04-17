@@ -195,7 +195,7 @@
 - (void)onDeviceOrientation:(NSNotification *)notification {
     
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (_isPublisher) {
+        if (self->_isPublisher) {
             R5Camera *camera = (R5Camera *)[self.stream getVideoSource];
             UIDeviceOrientation orientation = [UIDevice currentDevice].orientation;
             
@@ -203,7 +203,7 @@
                 [camera setOrientation: 270];
             }
             else if (orientation == UIDeviceOrientationLandscapeLeft) {
-                if (_useBackfacingCamera) {
+                if (self->_useBackfacingCamera) {
                     [camera setOrientation: 0];
                 }
                 else {
@@ -211,7 +211,7 @@
                 }
             }
             else if (orientation == UIDeviceOrientationLandscapeRight) {
-                if (_useBackfacingCamera) {
+                if (self->_useBackfacingCamera) {
                     [camera setOrientation: 180];
                 }
                 else {
@@ -281,22 +281,22 @@
    
     
     dispatch_async(dispatch_get_main_queue(), ^{
-        _isPublisher = YES;
+        self->_isPublisher = YES;
         
         [self initiateConnection:configuration];
         
-        if (_useAdaptiveBitrateController) {
+        if (self->_useAdaptiveBitrateController) {
             R5AdaptiveBitrateController *abrController = [[R5AdaptiveBitrateController alloc] init];
             [abrController attachToStream:self.stream];
-            [abrController setRequiresVideo:_useVideo];
+            [abrController setRequiresVideo:self->_useVideo];
         }
         
-        if (_useAudio) {
+        if (self->_useAudio) {
             R5Microphone *microphone = [self setUpMicrophone];
             [self.stream attachAudio:microphone];
         }
         
-        if (_useVideo) {
+        if (self->_useVideo) {
             R5Camera *camera = [self setUpCamera];
             
             self.controller = [[R5VideoViewController alloc] init];
@@ -317,8 +317,8 @@
             [self.controller attachStream:self.stream];
             
             [self.controller showPreview:YES];
-            [self.controller showDebugInfo:_showDebugInfo];
-            [self.controller setScaleMode:_scaleMode];
+            [self.controller showDebugInfo:self->_showDebugInfo];
+            [self.controller setScaleMode:self->_scaleMode];
             
         }
     });
@@ -348,7 +348,7 @@
     NSLog(@"Called unpublish");
     
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (_isStreaming) {
+        if (self->_isStreaming) {
             [self.stream stop];
         }
         else {
@@ -394,12 +394,12 @@
     configuration.parameters = @"";
     
     dispatch_async(dispatch_get_main_queue(), ^{
-        _isPublisher = NO;
-        _streamName = streamName;
+        self->_isPublisher = NO;
+        self->_streamName = streamName;
         
         [self initiateConnection:configuration];
         
-        if (_playbackVideo) {
+        if (self->_playbackVideo) {
             self.controller = [[R5VideoViewController alloc] init];
             UIView *view = [[UIView alloc] initWithFrame:CGRectMake(xPos, yPos + AACStatusBarHeight(), width, height)];
             [view setBackgroundColor:UIColor.blackColor];
@@ -417,11 +417,11 @@
             [self.controller showPreview:YES];
             [self.controller attachStream:self.stream];
 
-            [self.controller showDebugInfo:_showDebugInfo];
-            [self.controller setScaleMode:_scaleMode];
+            [self.controller showDebugInfo:self->_showDebugInfo];
+            [self.controller setScaleMode:self->_scaleMode];
         }
         
-        [self.stream setAudioController:[[R5AudioController alloc] initWithMode:_audioMode]];
+        [self.stream setAudioController:[[R5AudioController alloc] initWithMode:self->_audioMode]];
 
         [self.stream play:streamName];
     });
@@ -435,7 +435,7 @@
     NSLog(@"Called unsubscribe");
     
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (_isStreaming) {
+        if (self->_isStreaming) {
             [self.stream stop];
         } else {
             [self tearDown];
@@ -451,7 +451,7 @@
     NSLog(@"Called pause video");
     
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (_isStreaming)
+        if (self->_isStreaming)
             self.stream.pauseVideo = true;
     });
     
@@ -464,7 +464,7 @@
     NSLog(@"Called unpause video");
     
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (_isStreaming)
+        if (self->_isStreaming)
             self.stream.pauseVideo = false;
     });
     
@@ -477,7 +477,7 @@
     NSLog(@"Called pause audio");
     
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (_isStreaming)
+        if (self->_isStreaming)
             self.stream.pauseAudio = true;
     });
     
@@ -490,7 +490,7 @@
     NSLog(@"Called unpause audio");
     
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (_isStreaming)
+        if (self->_isStreaming)
             self.stream.pauseAudio = false;
     });
     
@@ -524,9 +524,9 @@
     NSLog(@"Called swapCamera");
     
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (_isPublisher) {
-            _useBackfacingCamera = !_useBackfacingCamera;
-            AVCaptureDevice *device = [self getCameraDevice:_useBackfacingCamera];
+        if (self->_isPublisher) {
+            self->_useBackfacingCamera = !self->_useBackfacingCamera;
+            AVCaptureDevice *device = [self getCameraDevice:self->_useBackfacingCamera];
             R5Camera *camera = (R5Camera *)[self.stream getVideoSource];
             [camera setDevice:device];
         }
@@ -569,8 +569,8 @@
             self.connection = nil;
         }
         
-        _streamName = nil;
-        _isStreaming = NO;
+        self->_streamName = nil;
+        self->_isStreaming = NO;
     });
 }
 
@@ -589,9 +589,9 @@
     
     dispatch_async(dispatch_get_main_queue(), ^{
        
-        if (statusCode == r5_status_disconnected && _isStreaming) {
+        if (statusCode == r5_status_disconnected && self->_isStreaming) {
             [self tearDown];
-            _isStreaming = NO;
+            self->_isStreaming = NO;
         }
     });
 }
