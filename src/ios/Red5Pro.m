@@ -275,8 +275,6 @@
     configuration.streamName = @"stream_no_name";
     configuration.bundleID = @"";
     configuration.licenseKey = licenseKey;
-    configuration.buffer_time = 1.0f;
-    configuration.stream_buffer_time = 1.0f;
     configuration.parameters = @"";
    
     
@@ -332,13 +330,15 @@
     NSLog(@"Called publish");
     
     NSString *streamName = [command argumentAtIndex:0];
+    bool isRecording = ((NSNumber*)[command.arguments objectAtIndex:2]).boolValue;
     
     _streamName = streamName;
-    
-    [self.stream publish:streamName type:R5RecordTypeLive];
-    //[self onDeviceOrientation:NULL];
-    //[self.stream updateStreamMeta];
-    
+
+    if (isRecording)
+        [self.stream publish:streamName type:R5RecordTypeRecord];
+    else
+        [self.stream publish:streamName type:R5RecordTypeLive];
+
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -375,6 +375,8 @@
     _audioBitrate = ((NSNumber*)[command.arguments objectAtIndex:7]).intValue;
     _bitrate = ((NSNumber*)[command.arguments objectAtIndex:8]).intValue;
     _framerate = ((NSNumber*)[command.arguments objectAtIndex:9]).intValue;
+    float bufferTime = ((NSNumber*)[command.arguments objectAtIndex:10]).floatValue;
+    float serverBufferTime = ((NSNumber*)[command.arguments objectAtIndex:11]).floatValue;
     
     NSString *licenseKey = [command argumentAtIndex:10];
     _showDebugInfo = ((NSNumber*)[command.arguments objectAtIndex:11]).boolValue;
@@ -389,8 +391,8 @@
     configuration.streamName = streamName;
     configuration.bundleID = @"";
     configuration.licenseKey = licenseKey;
-    configuration.buffer_time = 1.0f;
-    configuration.stream_buffer_time = 1.0f;
+    configuration.buffer_time = bufferTime > 1.0f ? bufferTime : 1.0f;
+    configuration.stream_buffer_time = streamBufferTime > 2.0f ? streamBufferTime : 2.0f;
     configuration.parameters = @"";
     
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -552,6 +554,50 @@
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
+
+- (void)getStreamStats:(CDVInvokedUrlCommand*)command
+{
+    NSLog(@"Called getStreamStats");
+
+    if (self.stream == nil) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"No streaming connection."];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        return;
+    }
+
+    r5_stats *stats = [self.stream getDebugStats];
+    if (stats == nil) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Error getting stats."];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        return;
+    }
+
+    NString *statsJson = [NSString stringWithFormat:@"{ \"buffered_time\" : \"%@\", \"subscribe_queue_size\" : \"%@\", \"nb_audio_frames\" : \"%@\", \"nb_video_frames\" : \"%@\", \
+    \"pkts_received\" : \"%@\", \"pkts_sent\" : \"%@\", \"pkts_video_dropped\" : \"%@\", \"pkts_audio_dropped\" : \"%@\", \"publish_pkts_dropped\" : \"%@\", \
+    \"total_bytes_received\" : \"%@\", \"subscribe_bitrate\" : \"%@\", \"publish_bitrate\" : \"%@\", \"socket_queue_size\" : \"%@\", \"socket_queue_size\" : \"%@\", \
+     \"bitrate_sent_smoothed\" : \"%@\", \"bitrate_received_smoothed\" : \"%@\", \"subscribe_latency\" : \"%@\"}",
+    stats.buffered_time,
+    stats.subscribe_queue_size,
+    stats.nb_audio_frames,
+    stats.nb_video_frames,
+    stats.pkts_received,
+    stats.pkts_sent,
+    stats.pkts_video_dropped,
+    stats.pkts_audio_dropped,
+    stats.publish_pkts_dropped,
+    stats.total_bytes_received,
+    stats.total_bytes_sent,
+    stats.subscribe_bitrate,
+    stats.publish_bitrate,
+    stats.socket_queue_size,
+    stats.bitrate_sent_smoothed,
+    stats.bitrate_received_smoothed,
+    stats.subscribe_latency];
+
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:statsJson];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
 
 - (void)tearDown
 {

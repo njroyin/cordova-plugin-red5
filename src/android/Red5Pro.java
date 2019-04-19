@@ -317,11 +317,10 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     }
 
 
-    // Since the initPublisher method only displays a preview view, calling publishStream will start sending
-    // the video
+    // Since the initPublisher method only displays a preview view, calling publishStream will start sending the video
     private void publishStream(JSONArray args, CallbackContext callbackContext) throws JSONException {
 
-        final ArgumentTypes[] types = {ArgumentTypes.STRING};
+        final ArgumentTypes[] types = {ArgumentTypes.STRING, ArgumentTypes.BOOLEAN};
         if (!validateArguments(args, types)) {
             callbackContext.error("Invalid arguments given");
             return;
@@ -333,6 +332,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         }
 
         String streamName = args.getString(0);
+        boolean isRecording = args.getBoolean(1);
         cordova.getActivity().runOnUiThread(new Runnable() {
             public void run() {
                 // We have to do this trickery for the time being in order to kick-start the publishing process.
@@ -342,7 +342,10 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 publishCam.setCamera(publishCam.getCamera());
                 publishCam.getCamera().startPreview();
 
-                stream.publish(streamName, RecordType.Live);
+                if (isRecording)
+                    stream.publish(streamName, RecordType.Record);
+                else
+                    stream.publish(streamName, RecordType.Live);
                 callbackContext.success();
             }
         });

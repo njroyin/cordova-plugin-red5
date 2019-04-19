@@ -98,4 +98,4 @@ var options = {
 In order to actually view the rendered video below you will need to set the background-color for the `<body>` element to transparent along with any other items that might be above the video window.
 
 # Gotchas
-When removing the plugin it leaves behind libraries in the jniLibs folder. You either need to delete this folder if re-installing this plugin or you need to remove your platform and re-add it.
+When removing the plugin from a cordova project it leaves behind libraries in the jniLibs folder. You either need to delete this folder if re-installing this plugin or you need to remove your platform and re-add it.

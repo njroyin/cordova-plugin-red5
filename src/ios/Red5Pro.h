@@ -19,6 +19,7 @@
 - (void)unpauseAudio:(CDVInvokedUrlCommand*)command;
 - (void)resize:(CDVInvokedUrlCommand*)command;
 - (void)updateScaleMode:(CDVInvokedUrlCommand*)command;
+- (void)getStreamStats:(CDVInvokedUrlCommand*)command;
 
 #pragma mark Other Methods
 - (void)swapCamera:(CDVInvokedUrlCommand*)command;
