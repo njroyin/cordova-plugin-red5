@@ -7,6 +7,7 @@ import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.lang.Runnable;
 
@@ -76,8 +77,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         BOOLEAN
     }
 
-    ;
-
     public Red5Pro() {
     }
 
@@ -110,7 +109,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
      * @return True if the action was valid, false if not.
      */
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-
         // Make sure we have our needed permissions before allowing any calls
         if (!checkForPermissions()) {
             callbackContext.error("Permission denied for device.");
@@ -146,13 +144,16 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 this.unpauseAudio(callbackContext);
                 return true;
             case "resize":
-                resize(args, callbackContext);
+                this.resize(args, callbackContext);
                 return true;
             case "updateScaleMode":
-                updateScaleMode(args, callbackContext);
+                this.updateScaleMode(args, callbackContext);
                 return true;
             case "swapCamera":
-                swapCamera(callbackContext);
+                this.swapCamera(callbackContext);
+                return true;
+            case "getStreamStats":
+                this.getStreamStats(callbackContext);
                 return true;
             case "registerEvents":
                 eventCallbackContext = callbackContext;
@@ -171,7 +172,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
     @Override
     public void onConnectionEvent(R5ConnectionEvent event) {
-
         Log.d("R5Cordova", ":onConnectionEvent " + event.name());
 
         sendEventMessage("{ \"type\" : \"" + event.name() + "\", \"data\" : \"" + event.message + "\" }");
@@ -184,7 +184,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     }
 
     private void createVideoView() {
-
         videoView = new R5VideoView(layout.getContext());
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(500, 500);
         params.setMargins(50, 50, 100, 100);
@@ -211,7 +210,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     }
 
     private void initPublisher(JSONArray args, CallbackContext callbackContext) throws JSONException {
-
         final ArgumentTypes[] types = {ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT,
                 ArgumentTypes.STRING, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.INT,
                 ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.BOOLEAN,
@@ -319,7 +317,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
     // Since the initPublisher method only displays a preview view, calling publishStream will start sending the video
     private void publishStream(JSONArray args, CallbackContext callbackContext) throws JSONException {
-
         final ArgumentTypes[] types = {ArgumentTypes.STRING, ArgumentTypes.BOOLEAN};
         if (!validateArguments(args, types)) {
             callbackContext.error("Invalid arguments given");
@@ -352,17 +349,15 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     }
 
     private void unpublish(CallbackContext callbackContext) {
-
         stopPreviewAndStreaming();
         callbackContext.success();
     }
 
     private void subscribe(JSONArray args, CallbackContext callbackContext) throws JSONException {
-
         final ArgumentTypes[] types = {ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT,
                 ArgumentTypes.STRING, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.INT,
                 ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.BOOLEAN, ArgumentTypes.STRING,
-                ArgumentTypes.BOOLEAN};
+                ArgumentTypes.BOOLEAN, ArgumentTypes.DOUBLE, ArgumentTypes.DOUBLE };
         if (!validateArguments(args, types)) {
             callbackContext.error("Invalid arguments given");
             return;
@@ -412,14 +407,20 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         String streamName = args.getString(12);
         playBehindWebview = args.getBoolean(13);
 
-        R5Configuration configuration = new R5Configuration(R5StreamProtocol.RTSP, host, portNumber, appName, 1.0f);
+        float bufferTime = (float)args.getDouble(14);
+        float serverBufferTime = (float)args.getDouble(15);
+
+
+        R5Configuration configuration = new R5Configuration(R5StreamProtocol.RTSP, host, portNumber, appName);
         configuration.setLicenseKey(licenseKey);
         configuration.setStreamName(streamName);
+        configuration.setBufferTime(bufferTime > 1.0f ? bufferTime : 1.0f);
+        configuration.setStreamBufferTime(serverBufferTime > 2.0f ? serverBufferTime : 2.0f);
         configuration.setBundleID(cordova.getActivity().getPackageName());
 
         initiateConnection(configuration);
 
-        stream.setScaleMode(0); // Does NOT work....bug in SDK...you must be publishing for it to work
+        stream.setScaleMode(0);
 
         stream.audioController.sampleRate = 44100;
 
@@ -449,7 +450,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     }
 
     private void unsubscribe(CallbackContext callbackContext) {
-
         if (videoView != null) {
             videoView.attachStream(null);
         }
@@ -466,7 +466,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
 
     private void pauseVideo(CallbackContext callbackContext) {
-
         if (isPreviewing == false || isStreaming == false || stream == null) {
             callbackContext.error("Not publishing video");
             return;
@@ -479,7 +478,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
 
     private void unpauseVideo(CallbackContext callbackContext) {
-
         if (isPreviewing == false || isStreaming == false || stream == null) {
             callbackContext.error("Not publishing video");
             return;
@@ -492,7 +490,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
 
     private void pauseAudio(CallbackContext callbackContext) {
-
         if (isPreviewing == false || isStreaming == false || stream == null) {
             callbackContext.error("Not publishing video");
             return;
@@ -505,7 +502,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
 
     private void unpauseAudio(CallbackContext callbackContext) {
-
         if (isPreviewing == false || isStreaming == false || stream == null) {
             callbackContext.error("Not publishing video");
             return;
@@ -517,7 +513,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     }
 
     private void stopPreviewAndStreaming() {
-
         if (videoView != null) {
             videoView.attachStream(null);
         }
@@ -539,7 +534,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     }
 
     private void cleanup() {
-
         Log.d("R5Cordova", ":cleanup (" + "stream" + ")!");
         if (stream != null) {
             stream.client = null;
@@ -568,7 +562,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     }
 
     private void resize(JSONArray args, CallbackContext callbackContext) throws JSONException {
-
         final ArgumentTypes[] types = {ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT};
         if (!validateArguments(args, types)) {
             callbackContext.error("Invalid arguments given");
@@ -592,7 +585,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     }
 
     private void updateScaleMode(JSONArray args, CallbackContext callbackContext) throws JSONException {
-
         final ArgumentTypes[] types = {ArgumentTypes.INT};
         if (!validateArguments(args, types)) {
             callbackContext.error("Invalid arguments given");
@@ -624,9 +616,38 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         });
     }
 
+    private void getStreamStats(CallbackContext callbackContext) throws JSONException {
+        if (!isStreaming || stream == null) {
+            callbackContext.error("Not streaming");
+            return;
+        }
+
+        R5Stream.R5Stats stats = stream.getStats();
+        JSONObject obj = new JSONObject();
+
+        obj.put("buffered_time", stats.buffered_time);
+        obj.put("subscribe_queue_size", stats.subscribe_queue_size);
+        obj.put("nb_audio_frames", stats.nb_audio_frames);
+        obj.put("nb_video_frames", stats.nb_video_frames);
+        obj.put("pkts_received", stats.pkts_received);
+        obj.put("pkts_sent", stats.pkts_sent);
+        obj.put("pkts_video_dropped", stats.pkts_video_dropped);
+        obj.put("pkts_audio_dropped", stats.pkts_audio_dropped);
+        obj.put("publish_pkts_dropped", stats.publish_pkts_dropped);
+        obj.put("total_bytes_received", stats.total_bytes_received);
+        obj.put("total_bytes_sent", stats.total_bytes_sent);
+        obj.put("subscribe_bitrate", stats.subscribe_bitrate);
+        obj.put("publish_bitrate", stats.publish_bitrate);
+        obj.put("socket_queue_size", stats.socket_queue_size);
+        obj.put("bitrate_sent_smoothed", stats.bitrate_sent_smoothed);
+        obj.put("bitrate_received_smoothed", stats.bitrate_received_smoothed);
+        obj.put("subscribe_latency", stats.subscribe_latency);
+
+        PluginResult result = new PluginResult(PluginResult.Status.OK, obj);
+        callbackContext.sendPluginResult(result);
+    }
 
     private void swapCamera(CallbackContext callbackContext) throws JSONException {
-
         if (!isPreviewing) {
             callbackContext.error("Not previewing");
             return;
@@ -668,7 +689,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     }
 
     private boolean validateArguments(JSONArray args, ArgumentTypes[] types) throws JSONException {
-
         if (args.length() != types.length) return false;
 
         try {
