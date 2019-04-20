@@ -330,7 +330,7 @@
     NSLog(@"Called publish");
     
     NSString *streamName = [command argumentAtIndex:0];
-    bool isRecording = ((NSNumber*)[command.arguments objectAtIndex:2]).boolValue;
+    bool isRecording = ((NSNumber*)[command.arguments objectAtIndex:1]).boolValue;
     
     _streamName = streamName;
 
@@ -392,7 +392,7 @@
     configuration.bundleID = @"";
     configuration.licenseKey = licenseKey;
     configuration.buffer_time = bufferTime > 1.0f ? bufferTime : 1.0f;
-    configuration.stream_buffer_time = streamBufferTime > 2.0f ? streamBufferTime : 2.0f;
+    configuration.stream_buffer_time = serverBufferTime > 2.0f ? serverBufferTime : 2.0f;
     configuration.parameters = @"";
     
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -572,27 +572,28 @@
         return;
     }
 
-    NString *statsJson = [NSString stringWithFormat:@"{ \"buffered_time\" : \"%@\", \"subscribe_queue_size\" : \"%@\", \"nb_audio_frames\" : \"%@\", \"nb_video_frames\" : \"%@\", \
-    \"pkts_received\" : \"%@\", \"pkts_sent\" : \"%@\", \"pkts_video_dropped\" : \"%@\", \"pkts_audio_dropped\" : \"%@\", \"publish_pkts_dropped\" : \"%@\", \
-    \"total_bytes_received\" : \"%@\", \"subscribe_bitrate\" : \"%@\", \"publish_bitrate\" : \"%@\", \"socket_queue_size\" : \"%@\", \"socket_queue_size\" : \"%@\", \
-     \"bitrate_sent_smoothed\" : \"%@\", \"bitrate_received_smoothed\" : \"%@\", \"subscribe_latency\" : \"%@\"}",
-    stats.buffered_time,
-    stats.subscribe_queue_size,
-    stats.nb_audio_frames,
-    stats.nb_video_frames,
-    stats.pkts_received,
-    stats.pkts_sent,
-    stats.pkts_video_dropped,
-    stats.pkts_audio_dropped,
-    stats.publish_pkts_dropped,
-    stats.total_bytes_received,
-    stats.total_bytes_sent,
-    stats.subscribe_bitrate,
-    stats.publish_bitrate,
-    stats.socket_queue_size,
-    stats.bitrate_sent_smoothed,
-    stats.bitrate_received_smoothed,
-    stats.subscribe_latency];
+
+    NSString *statsJson = [NSString stringWithFormat:@"{ \"buffered_time\" : \"%f\", \"subscribe_queue_size\" : \"%d\", \"nb_audio_frames\" : \"%d\", \"nb_video_frames\" : \"%d\", \
+    \"pkts_received\" : \"%ld\", \"pkts_sent\" : \"%ld\", \"pkts_video_dropped\" : \"%ld\", \"pkts_audio_dropped\" : \"%ld\", \"publish_pkts_dropped\" : \"%ld\", \
+    \"total_bytes_received\" : \"%ld\", \"total_bytes_sent\" : \"%ld\", \"subscribe_bitrate\" : \"%f\", \"publish_bitrate\" : \"%f\", \"socket_queue_size\" : \"%ld\",  \
+     \"bitrate_sent_smoothed\" : \"%f\", \"bitrate_received_smoothed\" : \"%lf\", \"subscribe_latency\" : \"%lf\"}",
+    stats->buffered_time,
+    stats->subscribe_queue_size,
+    stats->nb_audio_frames,
+    stats->nb_video_frames,
+    stats->pkts_received,
+    stats->pkts_sent,
+    stats->pkts_video_dropped,
+    stats->pkts_audio_dropped,
+    stats->publish_pkts_dropped,
+    stats->total_bytes_received,
+    stats->total_bytes_sent,
+    stats->subscribe_bitrate,
+    stats->publish_bitrate,
+    stats->socket_queue_size,
+    stats->bitrate_sent_smoothed,
+    stats->bitrate_received_smoothed,
+    stats->subscribe_latency];
 
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:statsJson];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
