@@ -11,7 +11,7 @@ This is a cordova plugin interface to the Red5 Pro Mobile SDK for Android and IO
 Install like a typical Cordova Plugin using
 
 ```markdown
-cordova plugin add cordova-plugin-red5
+cordova plugin add git+ssh://git@gitlab.com/plvr/cordova-plugin-red5.git#1.2.0
 ```
 
 # Usage
