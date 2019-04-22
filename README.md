@@ -17,10 +17,7 @@ cordova plugin add git+ssh://git@gitlab.com/plvr/cordova-plugin-red5.git#1.2.0
 # Uninstall 
 Remove the cordova plugin and the files it created
 ```markdown
-cordova plugin remove cordova-plugin-red5
-&& rm -rf platforms/android/app/src/main/jniLibs/
-&& rm -rf platforms/ios/Piphany/Plugins/cordova-plugin-red5pro/red5pro.h 
-&& rm -rf platforms/ios/Piphany/Plugins/cordova-plugin-red5pro/red5pro.m 
+cordova plugin remove cordova-plugin-red5 && rm -rf platforms/android/app/src/main/jniLibs/ && rm -rf platforms/ios/Piphany/Plugins/cordova-plugin-red5pro/red5pro.h  && rm -rf platforms/ios/Piphany/Plugins/cordova-plugin-red5pro/red5pro.m && rm -rf platforms/ios/Piphany/Plugins/cordova-plugin-red5pro/R5Streaming.framework/
 
 ```
 
