@@ -14,6 +14,17 @@ Install like a typical Cordova Plugin using
 cordova plugin add git+ssh://git@gitlab.com/plvr/cordova-plugin-red5.git#1.2.0
 ```
 
+# Uninstall 
+Remove the cordova plugin and the files it created
+```markdown
+cordova plugin remove cordova-plugin-red5
+rm -rf platforms/android/app/src/main/jniLibs/
+rm -rf platforms/ios/Piphany/Plugins/cordova-plugin-red5pro/red5pro.h 
+rm -rf platforms/ios/Piphany/Plugins/cordova-plugin-red5pro/red5pro.m 
+
+```
+
+
 # Usage
 
 Once added you can access the Red 5 Pro SDK through the use of the **window.red5promobile** variable. There are two main objects that you can create off the of SDK, namely:
