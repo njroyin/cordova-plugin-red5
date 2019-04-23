@@ -8,13 +8,13 @@
 
 
 @interface Red5Pro () {
-    
+
     int _scaleMode;
     int _logLevel;
     int _audioMode;
     BOOL _showDebugInfo;
     NSString *_streamName;  // required.
-    
+
     BOOL _isStreaming;
     BOOL _isPublisher;      // determined.
     BOOL _useVideo;
@@ -28,10 +28,10 @@
     int _audioSampleRate;
     BOOL _useAdaptiveBitrateController;
     BOOL _useBackfacingCamera;
-    
+
     int _currentRotation;
     bool _playBehindWebview;
-    
+
     NSString *eventCallbackId;
 }
 @end
@@ -57,13 +57,13 @@
     _audioMode = R5AudioControllerModeStandardIO;
     _useBackfacingCamera = NO;
     r5_set_log_level(_logLevel);
-    
+
     _playBehindWebview = false;
 
     if ([self verifyMediaAuthorization:AVMediaTypeVideo] == FALSE) {
         NSLog(@"Error getting video permissions");
     }
-    
+
     if ([self verifyMediaAuthorization:AVMediaTypeAudio] == FALSE) {
         NSLog(@"Error getting audio mic permissions.");
     }
@@ -83,12 +83,12 @@
             backCamera = device;
         }
     }
-    
+
     if (backfacing && backCamera != NULL) {
         return backCamera;
     }
     return frontCamera;
-    
+
 }
 
 - (R5Microphone *)setUpMicrophone
@@ -117,38 +117,38 @@
                                  alertControllerWithTitle:title
                                  message:message
                                  preferredStyle:UIAlertControllerStyleAlert];
-    
-    
-    
+
+
+
     UIAlertAction* okButton = [UIAlertAction
                                actionWithTitle:@"Ok"
                                style:UIAlertActionStyleDefault
                                handler:^(UIAlertAction * action) {
                                    //Handle your yes please button action here
                                }];
-    
+
     [alert addAction:okButton];
-    
+
     id rootViewController = [UIApplication sharedApplication].delegate.window.rootViewController;
     if([rootViewController isKindOfClass:[UINavigationController class]])
         rootViewController = ((UINavigationController *)rootViewController).viewControllers.firstObject;
-    
+
     if([rootViewController isKindOfClass:[UITabBarController class]])
         rootViewController = ((UITabBarController *)rootViewController).selectedViewController;
-    
+
     [rootViewController presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)deviceDeniedError
 {
     NSLog(@"Denied access to device");
-    
+
     NSString *alertText;
-    
+
     alertText = @"It looks like your privacy settings are preventing us from accessing your camera or microphone for video presenting. You can fix this by doing the following:\n\n1. Close this app.\n\n2. Open the Settings app.\n\n3. Scroll to the privacy section and select Camera or Microphone.\n\n4. Turn the Camera and Microphone on for this app.\n\n5. Open this app and try again.";
-    
+
     [self showAlert:@"Permission Error" withMessage:alertText];
-    
+
 //    UIAlertView *alert = [[UIAlertView alloc]
 //                          initWithTitle:@"Error"
 //                          message:alertText
@@ -157,8 +157,8 @@
 //                          otherButtonTitles:nil];
 //    alert.tag = 3491832;
 //    [alert show];
-    
-    
+
+
 
 }
 
@@ -188,17 +188,17 @@
         // impossible, unknown authorization status
         return FALSE;
     }
-    
+
     return FALSE;
 }
 
 - (void)onDeviceOrientation:(NSNotification *)notification {
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self->_isPublisher) {
             R5Camera *camera = (R5Camera *)[self.stream getVideoSource];
             UIDeviceOrientation orientation = [UIDevice currentDevice].orientation;
-            
+
             if (orientation == UIDeviceOrientationPortraitUpsideDown) {
                 [camera setOrientation: 270];
             }
@@ -223,10 +223,10 @@
             }
             [self.controller showPreview:YES];
             [self.stream updateStreamMeta];
-            
+
         }
     });
-    
+
 }
 
 
@@ -236,7 +236,7 @@
     R5Stream *stream = [[R5Stream alloc] initWithConnection:connection];
     [stream setDelegate:self];
     [stream setClient:self];
-    
+
     self.stream = stream;
     self.connection = connection;
 }
@@ -255,18 +255,18 @@
     _audioBitrate = ((NSNumber*)[command.arguments objectAtIndex:7]).intValue;
     _bitrate = ((NSNumber*)[command.arguments objectAtIndex:8]).intValue;
     _framerate = ((NSNumber*)[command.arguments objectAtIndex:9]).intValue;
-    
+
     NSString *licenseKey = [command argumentAtIndex:10];
     _showDebugInfo = ((NSNumber*)[command.arguments objectAtIndex:11]).boolValue;
     bool playBehindWebview = ((NSNumber*)[command.arguments objectAtIndex:12]).boolValue;
-    
+
     if ([self verifyMediaAuthorization:AVMediaTypeVideo] == FALSE || [self verifyMediaAuthorization:AVMediaTypeAudio] == FALSE) {
         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing Authorization."];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
         return;
     }
 
-    
+
     R5Configuration *configuration = [[R5Configuration alloc] init];
     configuration.protocol = 1;
     configuration.host = host;
@@ -276,32 +276,32 @@
     configuration.bundleID = @"";
     configuration.licenseKey = licenseKey;
     configuration.parameters = @"";
-   
-    
+
+
     dispatch_async(dispatch_get_main_queue(), ^{
         self->_isPublisher = YES;
-        
+
         [self initiateConnection:configuration];
-        
+
         if (self->_useAdaptiveBitrateController) {
             R5AdaptiveBitrateController *abrController = [[R5AdaptiveBitrateController alloc] init];
             [abrController attachToStream:self.stream];
             [abrController setRequiresVideo:self->_useVideo];
         }
-        
+
         if (self->_useAudio) {
             R5Microphone *microphone = [self setUpMicrophone];
             [self.stream attachAudio:microphone];
         }
-        
+
         if (self->_useVideo) {
             R5Camera *camera = [self setUpCamera];
-            
+
             self.controller = [[R5VideoViewController alloc] init];
             UIView *view = [[UIView alloc] initWithFrame:CGRectMake(xPos, yPos + AACStatusBarHeight(), width, height)];
             [view setBackgroundColor:UIColor.blackColor];
             [self.controller setView:view];
-            
+
             if (playBehindWebview) {
                 [self.webView.superview insertSubview:view belowSubview:self.webView];
                 [self.webView setOpaque:NO];
@@ -310,17 +310,17 @@
             else {
                 [self.webView addSubview:view];
             }
-            
+
             [self.stream attachVideo:camera];
             [self.controller attachStream:self.stream];
-            
+
             [self.controller showPreview:YES];
             [self.controller showDebugInfo:self->_showDebugInfo];
             [self.controller setScaleMode:self->_scaleMode];
-            
+
         }
     });
-    
+
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -328,10 +328,10 @@
 - (void)publish:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Called publish");
-    
+
     NSString *streamName = [command argumentAtIndex:0];
     bool isRecording = ((NSNumber*)[command.arguments objectAtIndex:1]).boolValue;
-    
+
     _streamName = streamName;
 
     if (isRecording)
@@ -346,7 +346,7 @@
 - (void)unpublish:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Called unpublish");
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self->_isStreaming) {
             [self.stream stop];
@@ -356,7 +356,7 @@
             [self tearDown];
         }
     });
-    
+
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -364,7 +364,7 @@
 - (void)subscribe:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Called subscribe");
-    
+
     int xPos = ((NSNumber*)[command.arguments objectAtIndex:0]).intValue;
     int yPos = ((NSNumber*)[command.arguments objectAtIndex:1]).intValue;
     int width = ((NSNumber*)[command.arguments objectAtIndex:2]).intValue;
@@ -375,14 +375,15 @@
     _audioBitrate = ((NSNumber*)[command.arguments objectAtIndex:7]).intValue;
     _bitrate = ((NSNumber*)[command.arguments objectAtIndex:8]).intValue;
     _framerate = ((NSNumber*)[command.arguments objectAtIndex:9]).intValue;
-    float bufferTime = ((NSNumber*)[command.arguments objectAtIndex:10]).floatValue;
-    float serverBufferTime = ((NSNumber*)[command.arguments objectAtIndex:11]).floatValue;
-    
+
     NSString *licenseKey = [command argumentAtIndex:10];
     _showDebugInfo = ((NSNumber*)[command.arguments objectAtIndex:11]).boolValue;
     NSString *streamName = [command argumentAtIndex:12];
     bool playBehindWebview = ((NSNumber*)[command.arguments objectAtIndex:13]).boolValue;
-    
+
+    float bufferTime = ((NSNumber*)[command.arguments objectAtIndex:14]).floatValue;
+    float serverBufferTime = ((NSNumber*)[command.arguments objectAtIndex:15]).floatValue;
+
     R5Configuration *configuration = [[R5Configuration alloc] init];
     configuration.protocol = 1;
     configuration.host = host;
@@ -394,19 +395,19 @@
     configuration.buffer_time = bufferTime > 1.0f ? bufferTime : 1.0f;
     configuration.stream_buffer_time = serverBufferTime > 2.0f ? serverBufferTime : 2.0f;
     configuration.parameters = @"";
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         self->_isPublisher = NO;
         self->_streamName = streamName;
-        
+
         [self initiateConnection:configuration];
-        
+
         if (self->_playbackVideo) {
             self.controller = [[R5VideoViewController alloc] init];
             UIView *view = [[UIView alloc] initWithFrame:CGRectMake(xPos, yPos + AACStatusBarHeight(), width, height)];
             [view setBackgroundColor:UIColor.blackColor];
             [self.controller setView:view];
-                   
+
             if (playBehindWebview) {
                 [self.webView.superview insertSubview:view belowSubview:self.webView];
                 [self.webView setOpaque:NO];
@@ -422,12 +423,12 @@
             [self.controller showDebugInfo:self->_showDebugInfo];
             [self.controller setScaleMode:self->_scaleMode];
         }
-        
+
         [self.stream setAudioController:[[R5AudioController alloc] initWithMode:self->_audioMode]];
 
         [self.stream play:streamName];
     });
-    
+
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -435,7 +436,7 @@
 - (void)unsubscribe:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Called unsubscribe");
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self->_isStreaming) {
             [self.stream stop];
@@ -443,7 +444,7 @@
             [self tearDown];
         }
     });
-    
+
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -451,12 +452,12 @@
 - (void)pauseVideo:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Called pause video");
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self->_isStreaming)
             self.stream.pauseVideo = true;
     });
-    
+
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -464,12 +465,12 @@
 - (void)unpauseVideo:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Called unpause video");
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self->_isStreaming)
             self.stream.pauseVideo = false;
     });
-    
+
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -477,12 +478,12 @@
 - (void)pauseAudio:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Called pause audio");
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self->_isStreaming)
             self.stream.pauseAudio = true;
     });
-    
+
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -490,12 +491,12 @@
 - (void)unpauseAudio:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Called unpause audio");
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self->_isStreaming)
             self.stream.pauseAudio = false;
     });
-    
+
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -503,7 +504,7 @@
 - (void)resize:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Called resize");
-    
+
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Not implemented yet."];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -511,12 +512,12 @@
 - (void)updateScaleMode:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Called updateScaleMode");
-    
+
     _scaleMode = ((NSNumber*)[command.arguments objectAtIndex:0]).intValue;;
     if (_playbackVideo) {
         [self.controller setScaleMode:_scaleMode];
     }
-    
+
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -524,7 +525,7 @@
 - (void)swapCamera:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Called swapCamera");
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self->_isPublisher) {
             self->_useBackfacingCamera = !self->_useBackfacingCamera;
@@ -533,7 +534,7 @@
             [camera setDevice:device];
         }
     });
-    
+
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -541,16 +542,16 @@
 - (void)registerEvents:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Called registerEvents");
-    
+
     eventCallbackId = command.callbackId;
 }
 
 - (void)unregisterEvents:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Called unregisterEvents");
-    
+
     eventCallbackId = nil;
-    
+
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -606,16 +607,16 @@
         if (self.stream != nil) {
             [self.stream setDelegate:nil];
             [self.stream setClient:nil];
-            
+
             self.stream = nil;
-            
+
             [self.controller willMoveToParentViewController:nil];
             [self.controller.view removeFromSuperview];
             [self.controller removeFromParentViewController];
             self.controller = nil;
             self.connection = nil;
         }
-        
+
         self->_streamName = nil;
         self->_isStreaming = NO;
     });
@@ -624,18 +625,18 @@
 -(void)onR5StreamStatus:(R5Stream *)stream withStatus:(int) statusCode withMessage:(NSString*)msg
 {
     NSLog(@"Received event %@ with status message %@", @(r5_string_for_status(statusCode)), msg);
-    
+
     // Now we need to convert Status Code to an all upper case string with _ for spaces. This matches how the
     // android event status code text is and we want them to be uniform.
     NSString *eventName = GetStatusStringFromCode(statusCode);
     [self sendEventMessage:[NSString stringWithFormat:@"{ \"type\" : \"%@\", \"data\" : \"%@\"}",eventName, msg]];
-      
+
     if (statusCode == r5_status_start_streaming) {
         _isStreaming = YES;
     }
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
-       
+
         if (statusCode == r5_status_disconnected && self->_isStreaming) {
             [self tearDown];
             self->_isStreaming = NO;
@@ -657,10 +658,10 @@ NSString * GetStatusStringFromCode(int code)
     NSArray *statusStringArray = @[ @"CONNECTED", @"DISCONNECTED", @"ERROR", @"TIMEOUT", @"CLOSE", @"START_STREAMING", @"STOP_STREAMING",
                                     @"NET_STATUS", @"AUDIO_MUTE", @"AUDIO_UNMUTE", @"VIDEO_MUTE", @"VIDEO_UNMUTE", @"LICENSE_ERROR",
                                     @"LICENSE_VALID", @"BUFFER_FLUSH_START", @"BUFFER_FLUSH_EMPTY", @"VIDEO_RENDER_START" ];
-    
+
     if (code < 0 || code >= [statusStringArray count] )
         return @"UNKNOWN";
-    
+
     return statusStringArray[code];
 }
 
