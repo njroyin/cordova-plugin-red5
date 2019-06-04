@@ -52,7 +52,7 @@
     _audioBitrate = 32;
     _cameraWidth = 640;
     _cameraHeight = 360;
-    _audioSampleRate = 16000;
+    _audioSampleRate = 44100;
     _useAdaptiveBitrateController = NO;
     _audioMode = R5AudioControllerModeStandardIO;
     _useBackfacingCamera = NO;
