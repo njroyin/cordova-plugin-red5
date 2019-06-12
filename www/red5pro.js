@@ -186,7 +186,7 @@ var red5promobile = new function () {
 
     function GetStreamStats(success, fail) {
         exec(success, fail, PLUGIN_NAME, 'getStreamStats', []);
-    };
+    }
 
     function GetVideoElementBounds(mediaElementId) {
         // Get computed positions from media element we are overlaying onto
@@ -197,7 +197,7 @@ var red5promobile = new function () {
         }
 
         return mediaElement.getBoundingClientRect();
-    };
+    }
 
     function Resize(xPos, yPos, width, height, actualPixels) {
         if (actualPixels) {
@@ -217,11 +217,11 @@ var red5promobile = new function () {
 
             exec(null, null, PLUGIN_NAME, 'resize', [xPos, yPos, width, height]);
         }
-    };
+    }
 
     function UpdateScaleMode(scaleMode, success, fail) {
         exec(success, fail, PLUGIN_NAME, 'updateScaleMode', [scaleMode]);
-    };
+    }
 };
 
 module.exports = red5promobile;
