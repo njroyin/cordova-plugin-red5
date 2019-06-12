@@ -89,6 +89,34 @@ var red5promobile = new function () {
         this.getOptions = function () {
             return initOptions;
         };
+
+        this.sendVideoToBack = function(success, fail) {
+          exec(success, fail, PLUGIN_NAME, 'sendVideoToBack', []);
+        };
+
+        this.bringVideoToFront = function(success, fail) {
+          exec(success, fail, PLUGIN_NAME, 'bringVideoToFront', []);
+        };
+
+        function Resize(xPos, yPos, width, height, actualPixels) {
+            if (actualPixels) {
+                exec(null, null, PLUGIN_NAME, 'resize', [xPos, yPos, width, height]);
+            } else {
+                // Check for percent
+                if (typeof (width) === 'string' && width.indexOf('%') !== -1) {
+                    width = parseInt(width) / 100.0;
+                    width = Math.min(Math.max(width, 0.0), 1.0);
+                    width *= window.outerWidth;
+                }
+                if (typeof (height) === 'string' && height.indexOf('%') !== -1) {
+                    height = parseInt(height) / 100.0;
+                    height = Math.min(Math.max(height, 0.0), 1.0);
+                    height *= window.outerHeight;
+                }
+
+                exec(null, null, PLUGIN_NAME, 'resize', [xPos, yPos, width, height]);
+            }
+        }
     };
 
     this.Subscriber = function () {

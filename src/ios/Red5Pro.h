@@ -18,6 +18,8 @@
 - (void)pauseAudio:(CDVInvokedUrlCommand*)command;
 - (void)unpauseAudio:(CDVInvokedUrlCommand*)command;
 - (void)resize:(CDVInvokedUrlCommand*)command;
+- (void)sendVideoToBack:(CDVInvokedUrlCommand*)command;
+- (void)bringVideoToFront:(CDVInvokedUrlCommand*)command;
 - (void)updateScaleMode:(CDVInvokedUrlCommand*)command;
 - (void)getStreamStats:(CDVInvokedUrlCommand*)command;
 
@@ -27,5 +29,5 @@
 - (void)unregisterEvents:(CDVInvokedUrlCommand*)command;
 
 
-   
+
 @end
