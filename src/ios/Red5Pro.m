@@ -505,7 +505,37 @@
 {
     NSLog(@"Called resize");
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Not implemented yet."];
+    int xPos = ((NSNumber*)[command.arguments objectAtIndex:0]).intValue;
+    int yPos = ((NSNumber*)[command.arguments objectAtIndex:1]).intValue;
+    int width = ((NSNumber*)[command.arguments objectAtIndex:2]).intValue;
+    int height = ((NSNumber*)[command.arguments objectAtIndex:3]).intValue;
+    CGRect frame = CGRectMake(xPos, yPos, width, height);
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.controller setFrame: frame];
+    });
+
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)sendVideoToBack:(CDVInvokedUrlCommand*)command
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.controller.view.superview sendSubviewToBack: self.controller.view];
+    });
+
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)bringVideoToFront:(CDVInvokedUrlCommand*)command
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.controller.view.superview bringSubviewToFront: self.controller.view];
+    });
+
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 

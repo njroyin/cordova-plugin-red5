@@ -3,10 +3,7 @@ cordova-plugin-red5pro
 
 This is a cordova plugin interface to the Red5 Pro Mobile SDK for Android and IOS.
 
-
-
 # Install
-
 
 Install like a typical Cordova Plugin using
 
@@ -14,17 +11,18 @@ Install like a typical Cordova Plugin using
 cordova plugin add git+ssh://git@gitlab.com/plvr/cordova-plugin-red5.git#1.2.0
 ```
 
-# Uninstall 
+# Uninstall
+
 Remove the cordova plugin and the files it created
+
 ```markdown
 cordova plugin remove cordova-plugin-red5 && rm -rf platforms/android/app/src/main/jniLibs/ && rm -rf platforms/ios/Piphany/Plugins/cordova-plugin-red5pro/red5pro.h  && rm -rf platforms/ios/Piphany/Plugins/cordova-plugin-red5pro/red5pro.m && rm -rf platforms/ios/Piphany/Plugins/cordova-plugin-red5pro/R5Streaming.framework/
 
 ```
 
-
 # Usage
 
-Once added you can access the Red 5 Pro SDK through the use of the **window.red5promobile** variable. There are two main objects that you can create off the of SDK, namely:
+Once added you can access the Red 5 Pro SDK through the use of the **window.red5promobile** variable. There are two main objects that you can create off of the SDK, namely:
 
 - Publisher
 - Subscriber
@@ -36,7 +34,7 @@ var publisher = new window.red5promobile.Publisher;
 var subscriber = new window.red5promobile.Subscriber;
 ```
 
-Once create you can call functions to perform certain features such as: init, Publish, Unpublish, Subscribe, Unsubscribe, etc. 
+Once create you can call functions to perform certain features such as: init, Publish, Unpublish, Subscribe, Unsubscribe, etc.
 
 In designing this plugin we wanted the ability to preview video without publishing. Thus we have an `init()` function that sets up all that is needed to know to connect to the red5 server, initialize the camera, and microphone but it does not begin publishing until the `publish()` function is called. However `subscribe()` begins subscribing immediately and displaying video and audio as soon as a connection is made.
 
@@ -91,7 +89,6 @@ Below is the list of events that get generated.
 |  VIDEO_RENDER_START | N/A  |
 |  OTHER | dependent  |
 
-
 ## Rendering Video Above/Below
 
 With this cordova plugin you can choose whether you want the video view to render above or below the webview. This works on both Android and IOS and is controlled by one of the options variables when calling `init()` on publisher or `subscribe` on the subscriber objects respectively. For example:
@@ -106,4 +103,5 @@ var options = {
 In order to actually view the rendered video below you will need to set the background-color for the `<body>` element to transparent along with any other items that might be above the video window.
 
 # Gotchas
+
 When removing the plugin from a cordova project it leaves behind libraries in the jniLibs folder. You either need to delete this folder if re-installing this plugin or you need to remove your platform and re-add it.
