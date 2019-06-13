@@ -91,11 +91,11 @@ var red5promobile = new function () {
         };
 
         this.sendVideoToBack = function(success, fail) {
-          exec(success, fail, PLUGIN_NAME, 'sendVideoToBack', []);
+            exec(success, fail, PLUGIN_NAME, 'sendVideoToBack', []);
         };
 
         this.bringVideoToFront = function(success, fail) {
-          exec(success, fail, PLUGIN_NAME, 'bringVideoToFront', []);
+            exec(success, fail, PLUGIN_NAME, 'bringVideoToFront', []);
         };
 
         function Resize(xPos, yPos, width, height, actualPixels) {

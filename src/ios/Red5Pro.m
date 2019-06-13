@@ -4,7 +4,7 @@
 #include <AVFoundation/AVFoundation.h>
 
 #import <Cordova/CDV.h>
-#import "red5pro.h"
+#import "Red5pro.h"
 
 
 @interface Red5Pro () {
@@ -266,7 +266,6 @@
         return;
     }
 
-
     R5Configuration *configuration = [[R5Configuration alloc] init];
     configuration.protocol = 1;
     configuration.host = host;
@@ -276,7 +275,6 @@
     configuration.bundleID = @"";
     configuration.licenseKey = licenseKey;
     configuration.parameters = @"";
-
 
     dispatch_async(dispatch_get_main_queue(), ^{
         self->_isPublisher = YES;
@@ -521,6 +519,7 @@
 
 - (void)sendVideoToBack:(CDVInvokedUrlCommand*)command
 {
+    NSLog(@"sendVideoToBack");
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.controller.view.superview sendSubviewToBack: self.controller.view];
     });
@@ -531,6 +530,7 @@
 
 - (void)bringVideoToFront:(CDVInvokedUrlCommand*)command
 {
+    NSLog(@"bringVideoToFront");
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.controller.view.superview bringSubviewToFront: self.controller.view];
     });
