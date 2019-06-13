@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-red5pro",
-  "version": "0.0.2",
+  "version": "1.2.1",
   "description": "Red5 Pro Mobile Cordova Plugin",
   "cordova": {
     "id": "cordova-plugin-red5pro",
