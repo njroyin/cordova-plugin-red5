@@ -98,7 +98,7 @@ var red5promobile = new function () {
             exec(success, fail, PLUGIN_NAME, 'bringVideoToFront', []);
         };
 
-        function Resize(xPos, yPos, width, height, actualPixels) {
+        function Resize(xPos, yPos, width, height, actualPixels, success, failure) {
             if (actualPixels) {
                 exec(null, null, PLUGIN_NAME, 'resize', [xPos, yPos, width, height]);
             } else {
@@ -114,7 +114,7 @@ var red5promobile = new function () {
                     height *= window.outerHeight;
                 }
 
-                exec(null, null, PLUGIN_NAME, 'resize', [xPos, yPos, width, height]);
+                exec(success, failure, PLUGIN_NAME, 'resize', [xPos, yPos, width, height]);
             }
         }
     };

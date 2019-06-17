@@ -404,6 +404,7 @@
             self.controller = [[R5VideoViewController alloc] init];
             UIView *view = [[UIView alloc] initWithFrame:CGRectMake(xPos, yPos + AACStatusBarHeight(), width, height)];
             [view setBackgroundColor:UIColor.blackColor];
+            view.clipsToBounds = YES;
             [self.controller setView:view];
 
             if (playBehindWebview) {
@@ -510,7 +511,14 @@
     CGRect frame = CGRectMake(xPos, yPos, width, height);
 
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.controller setFrame: frame];
+        [UIView animateWithDuration: 0.3
+        animations:^{
+            self.controller.view.frame = frame;
+        }
+        completion: ^(BOOL finished) {
+            [self.controller showPreview:YES];
+            NSLog(@"Video Resized");
+        }];
     });
 
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
