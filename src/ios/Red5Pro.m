@@ -33,6 +33,8 @@
     bool _playBehindWebview;
 
     NSString *eventCallbackId;
+
+    BOOL _isTearingDown;
 }
 @end
 
@@ -56,6 +58,7 @@
     _useAdaptiveBitrateController = NO;
     _audioMode = R5AudioControllerModeStandardIO;
     _useBackfacingCamera = NO;
+    _isTearingDown = NO;
     r5_set_log_level(_logLevel);
 
     _playBehindWebview = false;
@@ -641,6 +644,9 @@
 
 - (void)tearDown
 {
+    // check if it's being torn down.
+    if (self._isTearingDown == NO) {
+      self._isTearingDown = YES;
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self.stream != nil) {
             [self.stream setDelegate:nil];
@@ -657,7 +663,9 @@
 
         self->_streamName = nil;
         self->_isStreaming = NO;
+        self._isTearingDown = NO;
     });
+  }
 }
 
 -(void)onR5StreamStatus:(R5Stream *)stream withStatus:(int) statusCode withMessage:(NSString*)msg
