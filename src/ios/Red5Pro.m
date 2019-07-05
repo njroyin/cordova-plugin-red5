@@ -648,6 +648,9 @@
 
             self.stream = nil;
 
+            // Give the stream time to set the delegate and client to nil in their thread, stops from crashing
+            [NSThread sleepForTimeInterval: 0.25f];
+
             [self.controller willMoveToParentViewController:nil];
             [self.controller.view removeFromSuperview];
             [self.controller removeFromParentViewController];
