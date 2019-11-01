@@ -293,6 +293,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 Log.d("R5Cordova", "Camera width, height: " + Integer.toString(camera.getWidth()) + "," + Integer.toString(camera.getHeight()));
 
                 mic = new R5Microphone();
+                mic.setBitRate(audioBandwidth);
                 stream.attachMic(mic);
 
                 videoView.attachStream(stream);
