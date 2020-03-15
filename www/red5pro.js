@@ -1,12 +1,11 @@
-var exec = require('cordova/exec');
+let exec = require('cordova/exec');
 
-var PLUGIN_NAME = 'Red5Pro';
+const PLUGIN_NAME = 'Red5Pro';
 
-var red5promobile = new function () {
+let red5promobile = new function () {
 
     this.Publisher = function () {
-
-        var initOptions = {};
+        let initOptions = {};
 
         // Common functions
         this.resize = Resize;
@@ -16,10 +15,10 @@ var red5promobile = new function () {
         this.init = function (options, success, fail) {
             initOptions = options;
 
-            var positionRect = GetVideoElementBounds(options.mediaElementId);
+            let positionRect = GetVideoElementBounds(options.mediaElementId);
             document.getElementById(options.mediaElementId).setAttribute('style', 'display:none');
 
-            var initArray = [
+            let initArray = [
                 positionRect.x,
                 positionRect.y,
                 positionRect.width,
@@ -38,7 +37,7 @@ var red5promobile = new function () {
         };
 
         this.publish = function (streamName, success, fail) {
-            var record = initOptions.streamMode === "record";
+            let record = initOptions.streamMode === "record";
             exec(success, fail, PLUGIN_NAME, 'publish', [streamName, record]);
         };
 
@@ -56,7 +55,7 @@ var red5promobile = new function () {
                         event = event.replace(/[^\x00-\x7F]/g, "");
                         event = event.replace('\r\n', '').replace('\r\n', '')
                     }
-                    var eventJson = JSON.parse(event);
+                    let eventJson = JSON.parse(event);
                     callback(eventJson);
                 }, fail, PLUGIN_NAME, 'registerEvents', []);
             })(success);
@@ -97,30 +96,10 @@ var red5promobile = new function () {
         this.bringVideoToFront = function(success, fail) {
             exec(success, fail, PLUGIN_NAME, 'bringVideoToFront', []);
         };
-
-        function Resize(xPos, yPos, width, height, actualPixels, success, failure) {
-            if (actualPixels) {
-                exec(null, null, PLUGIN_NAME, 'resize', [xPos, yPos, width, height]);
-            } else {
-                // Check for percent
-                if (typeof (width) === 'string' && width.indexOf('%') !== -1) {
-                    width = parseInt(width) / 100.0;
-                    width = Math.min(Math.max(width, 0.0), 1.0);
-                    width *= window.outerWidth;
-                }
-                if (typeof (height) === 'string' && height.indexOf('%') !== -1) {
-                    height = parseInt(height) / 100.0;
-                    height = Math.min(Math.max(height, 0.0), 1.0);
-                    height *= window.outerHeight;
-                }
-
-                exec(success, failure, PLUGIN_NAME, 'resize', [xPos, yPos, width, height]);
-            }
-        }
     };
 
     this.Subscriber = function () {
-        var initOptions = {};
+        let initOptions = {};
 
         // Common functions
         this.resize = Resize;
@@ -128,13 +107,12 @@ var red5promobile = new function () {
         this.getStreamStats = GetStreamStats;
 
         this.subscribe = function (options, streamName, success, fail) {
-
             initOptions = options;
 
-            var positionRect = GetVideoElementBounds(options.mediaElementId);
+            let positionRect = GetVideoElementBounds(options.mediaElementId);
             document.getElementById(options.mediaElementId).setAttribute('style', 'display:none');
 
-            var initArray = [
+            let initArray = [
                 positionRect.x,
                 positionRect.y,
                 positionRect.width,
@@ -168,7 +146,7 @@ var red5promobile = new function () {
                         event = event.replace(/[^\x00-\x7F]/g, "");
                         event = event.replace('\r\n', '').replace('\r\n', '');
                     }
-                    var eventJson = JSON.parse(event);
+                    let eventJson = JSON.parse(event);
                     callback(eventJson);
                 }, fail, PLUGIN_NAME, 'registerEvents', []);
             })(success);
@@ -190,7 +168,7 @@ var red5promobile = new function () {
 
     function GetVideoElementBounds(mediaElementId) {
         // Get computed positions from media element we are overlaying onto
-        var mediaElement = document.getElementById(mediaElementId);
+        let mediaElement = document.getElementById(mediaElementId);
         if (mediaElement === undefined) {
             fail('Missing media element to place video on top of.');
             return;
@@ -199,7 +177,7 @@ var red5promobile = new function () {
         return mediaElement.getBoundingClientRect();
     }
 
-    function Resize(xPos, yPos, width, height, actualPixels) {
+        function Resize(xPos, yPos, width, height, actualPixels, success, failure) {
         if (actualPixels) {
             exec(null, null, PLUGIN_NAME, 'resize', [xPos, yPos, width, height]);
         } else {
@@ -215,7 +193,7 @@ var red5promobile = new function () {
                 height *= window.outerHeight;
             }
 
-            exec(null, null, PLUGIN_NAME, 'resize', [xPos, yPos, width, height]);
+                exec(success, failure, PLUGIN_NAME, 'resize', [xPos, yPos, width, height]);
         }
     }
 
