@@ -8,7 +8,9 @@ This is a cordova plugin interface to the Red5 Pro Mobile SDK for Android and IO
 Install like a typical Cordova Plugin using
 
 ```markdown
-cordova plugin add git+ssh://git@gitlab.com/plvr/cordova-plugin-red5.git#1.2.0
+cordova plugin add git+ssh://git@gitlab.com/redsky_public/cordova-plugin-red5
+*You can also use # at the end to target a specific tag such as*
+cordova plugin add git+ssh://git@gitlab.com/redsky_public/cordova-plugin-red5#1.2.3
 ```
 
 # Uninstall
