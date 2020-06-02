@@ -55,7 +55,12 @@ let red5promobile = new function () {
                         event = event.replace(/[^\x00-\x7F]/g, "");
                         event = event.replace('\r\n', '').replace('\r\n', '')
                     }
-                    let eventJson = JSON.parse(event);
+                    let eventJson = {};
+                    try {
+                        eventJson = JSON.parse(event);
+                    } catch (e) {
+                        console.error('Could not parse event json from red5 plugin:', event);
+                    }
                     callback(eventJson);
                 }, fail, PLUGIN_NAME, 'registerEvents', []);
             })(success);
@@ -146,7 +151,12 @@ let red5promobile = new function () {
                         event = event.replace(/[^\x00-\x7F]/g, "");
                         event = event.replace('\r\n', '').replace('\r\n', '');
                     }
-                    let eventJson = JSON.parse(event);
+                    let eventJson = {};
+                    try {
+                        eventJson = JSON.parse(event);
+                    } catch (e) {
+                        console.error('Could not parse event json from red5 plugin:', event);
+                    }
                     callback(eventJson);
                 }, fail, PLUGIN_NAME, 'registerEvents', []);
             })(success);
