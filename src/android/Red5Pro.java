@@ -10,6 +10,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.Runnable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import android.Manifest;
 import android.content.res.Resources;
@@ -279,18 +283,20 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
         cordova.getActivity().runOnUiThread(new Runnable() {
             public void run() {
-
                 createVideoView();
 
                 Camera cam = openFrontFacingCameraGingerbread();
                 cam.setDisplayOrientation((cameraOrientation + 180) % 360);
 
-                camera = new R5Camera(cam, captureWidth, captureHeight);
+                // Find the best resolution. I didn't like Red5's algorithm
+                Camera.Size selectedPreviewSize = getBestResolution(cam.getParameters().getSupportedPreviewSizes(), captureWidth, captureHeight);
+
+                camera = new R5Camera(cam, selectedPreviewSize.width, selectedPreviewSize.height);
                 camera.setBitrate(videoBandwidth);
                 camera.setOrientation(cameraOrientation);
                 camera.setFramerate(frameRate);
 
-                Log.d("R5Cordova", "Camera width, height: " + Integer.toString(camera.getWidth()) + "," + Integer.toString(camera.getHeight()));
+                Log.d("R5Cordova", "Selected Camera width, height: " + Integer.toString(camera.getWidth()) + "," + Integer.toString(camera.getHeight()));
 
                 mic = new R5Microphone();
                 mic.setBitRate(audioBandwidth);
@@ -315,6 +321,27 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         });
     }
 
+    private Camera.Size getBestResolution(List<Camera.Size> previewSizes, int desiredCaptureWidth, int desiredCaptureHeight) {
+        for (Camera.Size size : previewSizes) {
+            Log.d("R5Cordova", "Camera Preview w,h: " + Integer.toString(size.width) + "," + Integer.toString(size.height));
+        }
+
+        // Sorts on width ordering smallest width first
+        Collections.sort(previewSizes, (size, t1) -> {
+            if (size.width == t1.width) return 0;
+            else if (size.width > t1.width) return 1;
+            else return -1;
+        });
+
+        int desiredCaptureArea = desiredCaptureWidth * desiredCaptureHeight;
+        for (Camera.Size size : previewSizes) {
+            int pixelArea = size.width * size.height;
+            if (pixelArea > desiredCaptureArea) return size;
+        }
+
+        // If we can't find a match just return the first one.
+        return previewSizes.get(0);
+    }
 
     // Since the initPublisher method only displays a preview view, calling publishStream will start sending the video
     private void publishStream(JSONArray args, CallbackContext callbackContext) throws JSONException {
