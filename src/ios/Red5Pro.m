@@ -76,13 +76,6 @@
     AVCaptureDevice *frontCamera;
     AVCaptureDevice *backCamera;
     for (AVCaptureDevice *device in list) {
-        // Auto focus
-        if ([device isFocusModeSupported:AVCaptureFocusModeContinuousAutoFocus]) {
-            CGPoint autofocusPoint = CGPointMake(0.5f, 0.5f);
-            [device setFocusPointOfInterest:autofocusPoint];
-            [device setFocusMode:AVCaptureFocusModeContinuousAutoFocus];
-        }
-        
         if (device.position == AVCaptureDevicePositionFront) {
             frontCamera = device;
         }
