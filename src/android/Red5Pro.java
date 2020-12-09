@@ -289,9 +289,9 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 cam.setDisplayOrientation((cameraOrientation + 180) % 360);
 
                 // TEMP force to 1280x720 for higher resolution and higher bit rate
-                int tmpCaptureWidth = 1280;
-                int tmpCaptureHeight = 720;
-                int tmpVideoBandwidth = 1500;
+                int tmpCaptureWidth = 1920;
+                int tmpCaptureHeight = 1080;
+                int tmpVideoBandwidth = 3000;
 
                 // Find the best resolution. I didn't like Red5's algorithm
                 Camera.Size selectedPreviewSize = getBestResolution(cam.getParameters().getSupportedPreviewSizes(), tmpCaptureWidth, tmpCaptureHeight);
