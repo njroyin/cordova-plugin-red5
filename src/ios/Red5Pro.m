@@ -258,6 +258,7 @@
 
     // Force bit rate higher
     _bitrate = 3000;
+    _framerate = 25;
 
     NSString *licenseKey = [command argumentAtIndex:10];
     _showDebugInfo = ((NSNumber*)[command.arguments objectAtIndex:11]).boolValue;
