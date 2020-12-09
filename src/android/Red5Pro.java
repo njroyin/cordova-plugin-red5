@@ -264,6 +264,11 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         int videoBandwidth = args.getInt(8);
         int frameRate = args.getInt(9);
 
+        // TEMP force to 1280x720 for higher resolution and higher bit rate
+        captureWidth = 1280;
+        captureHeight = 720;
+        videoBandwidth = 1500;
+
         String licenseKey = args.getString(10);
         boolean showDebugView = args.getBoolean(11);
         playBehindWebview = args.getBoolean(12);
