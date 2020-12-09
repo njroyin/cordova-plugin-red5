@@ -288,6 +288,14 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 Camera cam = openFrontFacingCameraGingerbread();
                 cam.setDisplayOrientation((cameraOrientation + 180) % 360);
 
+                // Auto focus
+                Camera.Parameters parameters = cam.getParameters();
+                if (parameters.getSupportedFocusModes().contains(
+                        Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
+                    parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+                }
+                cam.setParameters(parameters);
+
                 // TEMP force to 1280x720 for higher resolution and higher bit rate
                 int tmpCaptureWidth = 1920;
                 int tmpCaptureHeight = 1080;
