@@ -264,11 +264,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         int videoBandwidth = args.getInt(8);
         int frameRate = args.getInt(9);
 
-        // TEMP force to 1280x720 for higher resolution and higher bit rate
-        captureWidth = 1280;
-        captureHeight = 720;
-        videoBandwidth = 1500;
-
         String licenseKey = args.getString(10);
         boolean showDebugView = args.getBoolean(11);
         playBehindWebview = args.getBoolean(12);
@@ -293,11 +288,16 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 Camera cam = openFrontFacingCameraGingerbread();
                 cam.setDisplayOrientation((cameraOrientation + 180) % 360);
 
+                // TEMP force to 1280x720 for higher resolution and higher bit rate
+                int tmpCaptureWidth = 1280;
+                int tmpCaptureHeight = 720;
+                int tmpVideoBandwidth = 1500;
+
                 // Find the best resolution. I didn't like Red5's algorithm
-                Camera.Size selectedPreviewSize = getBestResolution(cam.getParameters().getSupportedPreviewSizes(), captureWidth, captureHeight);
+                Camera.Size selectedPreviewSize = getBestResolution(cam.getParameters().getSupportedPreviewSizes(), tmpCaptureWidth, tmpCaptureHeight);
 
                 camera = new R5Camera(cam, selectedPreviewSize.width, selectedPreviewSize.height);
-                camera.setBitrate(videoBandwidth);
+                camera.setBitrate(tmpVideoBandwidth);
                 camera.setOrientation(cameraOrientation);
                 camera.setFramerate(frameRate);
 
