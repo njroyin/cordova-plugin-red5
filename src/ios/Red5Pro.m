@@ -50,8 +50,8 @@
     _bitrate = 3000;
     _framerate = 15;
     _audioBitrate = 32;
-    _cameraWidth = 1920;
-    _cameraHeight = 1080;
+    _cameraWidth = 1280;
+    _cameraHeight = 720;
     _audioSampleRate = 44100;
     _useAdaptiveBitrateController = NO;
     _audioMode = R5AudioControllerModeStandardIO;
@@ -258,7 +258,7 @@
 
     // Force bit rate higher
     _bitrate = 3000;
-    _framerate = 25;
+    _framerate = 30;
 
     NSString *licenseKey = [command argumentAtIndex:10];
     _showDebugInfo = ((NSNumber*)[command.arguments objectAtIndex:11]).boolValue;
