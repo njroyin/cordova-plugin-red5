@@ -47,7 +47,7 @@
     _useVideo = YES;
     _useAudio = YES;
     _playbackVideo = YES;
-    _bitrate = 3000;
+    _bitrate = 1500;
     _framerate = 15;
     _audioBitrate = 32;
     _cameraWidth = 1280;
@@ -257,7 +257,7 @@
     _framerate = ((NSNumber*)[command.arguments objectAtIndex:9]).intValue;
 
     // Force bit rate higher
-    _bitrate = 3000;
+    _bitrate = 1500;
     _framerate = 30;
 
     NSString *licenseKey = [command argumentAtIndex:10];

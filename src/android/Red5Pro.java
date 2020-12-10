@@ -291,7 +291,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 // TEMP force to 1280x720 for higher resolution and higher bit rate
                 int tmpCaptureWidth = 1280;
                 int tmpCaptureHeight = 720;
-                int tmpVideoBandwidth = 3000;
+                int tmpVideoBandwidth = 1500;
                 int tmpFrameRate = 30;
 
                 // Find the best resolution. I didn't like Red5's algorithm
