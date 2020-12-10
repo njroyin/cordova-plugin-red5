@@ -800,6 +800,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 try {
                     cam = Camera.open(camIdx);
                     cameraOrientation = cameraInfo.orientation;
+                    attemptToSetFocusMode(cam);
                     applyInverseDeviceRotation();
                     break;
                 } catch (RuntimeException e) {
@@ -809,6 +810,18 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         }
 
         return cam;
+    }
+
+    private void attemptToSetFocusMode(Camera cam) {
+        Camera.Parameters camParameters = cam.getParameters();
+        if (camParameters.getSupportedFocusModes().contains(
+                Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
+            camParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+            cam.setParameters(camParameters);
+            Log.d("R5Cordova", "Setting Continuous Focus On");
+        } else {
+            Log.d("R5Cordova", "No continuous video auto focus available");
+        }
     }
 
     private void applyDeviceRotation() {
