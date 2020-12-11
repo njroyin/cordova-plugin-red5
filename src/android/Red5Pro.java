@@ -252,10 +252,8 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         // Pull out all the parameters passed in, make note positions are in device independent (dp) units
         int xPos = dpToPx(args.getInt(0));
         int yPos = dpToPx(args.getInt(1));
-        int captureWidth = args.getInt(2);
-        int captureHeight = args.getInt(3);
-        int screenWidth = dpToPx(captureWidth);
-        int screenHeight = dpToPx(captureHeight);
+        int screenWidth = dpToPx(args.getInt(2));
+        int screenHeight = dpToPx(args.getInt(3));
 
         String host = args.getString(4);
         int portNumber = args.getInt(5);
