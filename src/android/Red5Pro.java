@@ -217,7 +217,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         final ArgumentTypes[] types = {ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT,
                 ArgumentTypes.STRING, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.INT,
                 ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.BOOLEAN,
-                ArgumentTypes.BOOLEAN};
+                ArgumentTypes.BOOLEAN, ArgumentTypes.INT, ArgumentTypes.INT};
         if (!validateArguments(args, types)) {
             callbackContext.error("Invalid arguments given");
             return;
@@ -268,6 +268,9 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         boolean showDebugView = args.getBoolean(11);
         playBehindWebview = args.getBoolean(12);
 
+        int cameraWidth = args.getInt(13);
+        int cameraHeight = args.getInt(14);
+
         R5Configuration configuration = new R5Configuration(R5StreamProtocol.RTSP, host, portNumber, appName, 1.0f);
         configuration.setLicenseKey(licenseKey);
         configuration.setBundleID(cordova.getActivity().getPackageName());
@@ -288,19 +291,13 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 Camera cam = openFrontFacingCameraGingerbread();
                 cam.setDisplayOrientation((cameraOrientation + 180) % 360);
 
-                // TEMP force to 1280x720 for higher resolution and higher bit rate
-                int tmpCaptureWidth = 1280;
-                int tmpCaptureHeight = 720;
-                int tmpVideoBandwidth = 1500;
-                int tmpFrameRate = 30;
-
                 // Find the best resolution. I didn't like Red5's algorithm
-                Camera.Size selectedPreviewSize = getBestResolution(cam.getParameters().getSupportedPreviewSizes(), tmpCaptureWidth, tmpCaptureHeight);
+                Camera.Size selectedPreviewSize = getBestResolution(cam.getParameters().getSupportedPreviewSizes(), cameraWidth, cameraHeight);
 
                 camera = new R5Camera(cam, selectedPreviewSize.width, selectedPreviewSize.height);
-                camera.setBitrate(tmpVideoBandwidth);
+                camera.setBitrate(videoBandwidth);
                 camera.setOrientation(cameraOrientation);
-                camera.setFramerate(tmpFrameRate);
+                camera.setFramerate(frameRate);
 
                 Log.d("R5Cordova", "Selected Camera width, height: " + Integer.toString(camera.getWidth()) + "," + Integer.toString(camera.getHeight()));
 
