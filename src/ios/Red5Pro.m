@@ -47,11 +47,11 @@
     _useVideo = YES;
     _useAudio = YES;
     _playbackVideo = YES;
-    _bitrate = 1500;
-    _framerate = 15;
+    _bitrate = 750;
+    _framerate = 25;
     _audioBitrate = 32;
-    _cameraWidth = 1280;
-    _cameraHeight = 720;
+    _cameraWidth = 720;
+    _cameraHeight = 480;
     _audioSampleRate = 44100;
     _useAdaptiveBitrateController = NO;
     _audioMode = R5AudioControllerModeStandardIO;
@@ -256,13 +256,12 @@
     _bitrate = ((NSNumber*)[command.arguments objectAtIndex:8]).intValue;
     _framerate = ((NSNumber*)[command.arguments objectAtIndex:9]).intValue;
 
-    // Force bit rate higher
-    _bitrate = 1500;
-    _framerate = 30;
-
     NSString *licenseKey = [command argumentAtIndex:10];
     _showDebugInfo = ((NSNumber*)[command.arguments objectAtIndex:11]).boolValue;
     bool playBehindWebview = ((NSNumber*)[command.arguments objectAtIndex:12]).boolValue;
+
+    _cameraWidth = ((NSNumber*)[command.arguments objectAtIndex:13]).intValue;
+    _cameraHeight = ((NSNumber*)[command.arguments objectAtIndex:14]).intValue;
 
     if ([self verifyMediaAuthorization:AVMediaTypeVideo] == FALSE || [self verifyMediaAuthorization:AVMediaTypeAudio] == FALSE) {
         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing Authorization."];

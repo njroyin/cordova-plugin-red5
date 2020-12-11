@@ -31,7 +31,9 @@ let red5promobile = new function () {
                 options.frameRate,
                 options.licenseKey,
                 options.debugView || false,
-                options.renderBelow || false
+                options.renderBelow || false,
+                options.cameraWidth,
+                options.cameraHeight
             ];
             exec(success, fail, PLUGIN_NAME, 'initPublisher', initArray);
         };
