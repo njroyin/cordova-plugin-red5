@@ -12,7 +12,6 @@ import org.json.JSONObject;
 import java.lang.Runnable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import android.Manifest;
@@ -20,10 +19,8 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.hardware.Camera;
-import android.telecom.Call;
 import android.util.Log;
 import android.view.Surface;
-import android.view.View;
 import android.widget.FrameLayout;
 
 import com.red5pro.streaming.R5Connection;
@@ -51,6 +48,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     private int cameraOrientation;
     private boolean isPreviewing = false;
     private boolean playBehindWebview = false;
+    private RecordType recordType;
 
     CordovaInterface cordovaInterface;
     CordovaWebView cordovaWebView;
@@ -64,15 +62,18 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
     private int currentCamMode = Camera.CameraInfo.CAMERA_FACING_FRONT;
 
-    public static final String[] permissions = {
+    // Publisher needed permissions
+    public static final String[] publisherPermissions = {
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.INTERNET,
-            Manifest.permission.ACCESS_NETWORK_STATE,
-            Manifest.permission.ACCESS_WIFI_STATE,
-            Manifest.permission.READ_PHONE_STATE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
+
+    public static final String[] subscriberPermissions = {
+    };
+
+    private CallbackContext permissionCallbackContext;
+
 
     public enum ArgumentTypes {
         STRING,
@@ -91,6 +92,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
      * @param cordova The context of the main Activity.
      * @param webView The CordovaWebView Cordova is running in.
      */
+    @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
 
@@ -98,10 +100,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
         cordovaInterface = cordova;
         cordovaWebView = webView;
-
-        if (!checkForPermissions()) {
-            cordova.requestPermissions(this, 0, permissions);
-        }
     }
 
     /**
@@ -112,14 +110,12 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
      * @param callbackContext The callback id used when calling back into JavaScript.
      * @return True if the action was valid, false if not.
      */
+    @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        // Make sure we have our needed permissions before allowing any calls
-        if (!checkForPermissions()) {
-            callbackContext.error("Permission denied for device.");
-            return true;
-        }
-
         switch (action) {
+            case "checkPermissions":
+                this.checkPermissions(args, callbackContext);
+                return true;
             case "initPublisher":
                 this.initPublisher(args, callbackContext);
                 return true;
@@ -187,10 +183,10 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         }
     }
 
-    private void createVideoView() {
+    private void createVideoView(int renderXPos, int renderYPos, int renderWidth, int renderHeight) {
         videoView = new R5VideoView(layout.getContext());
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(500, 500);
-        params.setMargins(50, 50, 100, 100);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(renderWidth, renderHeight);
+        params.setMargins(renderXPos, renderYPos, 0, 0);
         videoView.setLayoutParams(params);
         videoView.setBackgroundColor(Color.BLACK);
         layout.addView(videoView);
@@ -217,7 +213,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         final ArgumentTypes[] types = {ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT,
                 ArgumentTypes.STRING, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.INT,
                 ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.BOOLEAN,
-                ArgumentTypes.BOOLEAN, ArgumentTypes.INT, ArgumentTypes.INT};
+                ArgumentTypes.BOOLEAN, ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.STRING};
         if (!validateArguments(args, types)) {
             callbackContext.error("Invalid arguments given");
             return;
@@ -250,24 +246,40 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         }
 
         // Pull out all the parameters passed in, make note positions are in device independent (dp) units
-        int xPos = dpToPx(args.getInt(0));
-        int yPos = dpToPx(args.getInt(1));
-        int screenWidth = dpToPx(args.getInt(2));
-        int screenHeight = dpToPx(args.getInt(3));
+        int renderXPos = dpToPx(args.getInt(0));
+        int renderYPos = dpToPx(args.getInt(1));
+        int renderWidth = dpToPx(args.getInt(2));
+        int renderHeight = dpToPx(args.getInt(3));
 
         String host = args.getString(4);
         int portNumber = args.getInt(5);
         String appName = args.getString(6);
-        int audioBandwidth = args.getInt(7);
-        int videoBandwidth = args.getInt(8);
+        int audioBandwidthKbps = args.getInt(7);
+        int videoBandwidthKbps = args.getInt(8);
         int frameRate = args.getInt(9);
 
         String licenseKey = args.getString(10);
         boolean showDebugView = args.getBoolean(11);
         playBehindWebview = args.getBoolean(12);
 
-        int cameraWidth = args.getInt(13);
-        int cameraHeight = args.getInt(14);
+        int cameraCaptureWidth = args.getInt(13);
+        int cameraCaptureHeight = args.getInt(14);
+
+        int scaleMode = args.getInt(15);
+
+        int audioSampleRateHz = args.getInt(16);
+
+        String streamMode = args.getString(17);
+        if (streamMode.equalsIgnoreCase("append"))
+            recordType = RecordType.Append;
+        else if (streamMode.equalsIgnoreCase("record"))
+            recordType = RecordType.Record;
+        else if (streamMode.equalsIgnoreCase("live"))
+            recordType = RecordType.Live;
+        else {
+            callbackContext.error("Invalid stream mode");
+            return;
+        }
 
         R5Configuration configuration = new R5Configuration(R5StreamProtocol.RTSP, host, portNumber, appName, 1.0f);
         configuration.setLicenseKey(licenseKey);
@@ -275,32 +287,32 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
         initiateConnection(configuration);
 
-        stream.setScaleMode(0);
+        stream.setScaleMode(scaleMode);
 
-        stream.audioController.sampleRate = 44100;
+        stream.audioController.sampleRate = audioSampleRateHz;
 
         //show all logging
-        stream.setLogLevel(R5Stream.LOG_LEVEL_DEBUG);
+        // stream.setLogLevel(R5Stream.LOG_LEVEL_DEBUG);
 
         cordova.getActivity().runOnUiThread(new Runnable() {
             public void run() {
-                createVideoView();
+                createVideoView(renderXPos, renderYPos, renderWidth, renderHeight);
 
                 Camera cam = openFrontFacingCameraGingerbread();
                 cam.setDisplayOrientation((cameraOrientation + 180) % 360);
 
                 // Find the best resolution. I didn't like Red5's algorithm
-                Camera.Size selectedPreviewSize = getBestResolution(cam.getParameters().getSupportedPreviewSizes(), cameraWidth, cameraHeight);
+                Camera.Size selectedPreviewSize = getBestResolution(cam.getParameters().getSupportedPreviewSizes(), cameraCaptureWidth, cameraCaptureHeight);
 
                 camera = new R5Camera(cam, selectedPreviewSize.width, selectedPreviewSize.height);
-                camera.setBitrate(videoBandwidth);
+                camera.setBitrate(videoBandwidthKbps);
                 camera.setOrientation(cameraOrientation);
                 camera.setFramerate(frameRate);
 
                 Log.d("R5Cordova", "Selected Camera width, height: " + Integer.toString(camera.getWidth()) + "," + Integer.toString(camera.getHeight()));
 
                 mic = new R5Microphone();
-                mic.setBitRate(audioBandwidth);
+                mic.setBitRate(audioBandwidthKbps);
                 stream.attachMic(mic);
 
                 videoView.attachStream(stream);
@@ -309,12 +321,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 videoView.showDebugView(showDebugView);
 
                 cam.startPreview();
-
-                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(screenWidth, screenHeight);
-                params.setMargins(xPos, yPos, 0, 0);
-                videoView.setLayoutParams(params);
-                layout.requestLayout();
-
                 isPreviewing = true;
 
                 callbackContext.success();
@@ -323,9 +329,19 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     }
 
     private Camera.Size getBestResolution(List<Camera.Size> previewSizes, int desiredCaptureWidth, int desiredCaptureHeight) {
+        // Look for an exact match
+        Camera.Size exactMatchSize = null;
         for (Camera.Size size : previewSizes) {
             Log.d("R5Cordova", "Camera Preview w,h: " + Integer.toString(size.width) + "," + Integer.toString(size.height));
+            if (size.width == desiredCaptureWidth && size.height == desiredCaptureHeight) {
+                Log.d("R5Cordova", "MATCHED Camera Preview w,h: " + Integer.toString(size.width) + "," + Integer.toString(size.height));
+                exactMatchSize = size;
+            } else {
+                Log.d("R5Cordova", "Camera Preview w,h: " + Integer.toString(size.width) + "," + Integer.toString(size.height));
         }
+        }
+
+        if (exactMatchSize != null) return exactMatchSize;
 
         // Sorts on width ordering smallest width first
         Collections.sort(previewSizes, (size, t1) -> {
@@ -334,6 +350,8 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
             else return -1;
         });
 
+        // The algorithm here is to try to find the closest TOTAL pixel area. A better algorithm
+        // would be to find the closest to desired width and height
         int desiredCaptureArea = desiredCaptureWidth * desiredCaptureHeight;
         for (Camera.Size size : previewSizes) {
             int pixelArea = size.width * size.height;
@@ -344,9 +362,11 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         return previewSizes.get(0);
     }
 
-    // Since the initPublisher method only displays a preview view, calling publishStream will start sending the video
+    /**
+     Since the initPublisher method only displays a preview view, calling publishStream will start sending the video
+     */
     private void publishStream(JSONArray args, CallbackContext callbackContext) throws JSONException {
-        final ArgumentTypes[] types = {ArgumentTypes.STRING, ArgumentTypes.BOOLEAN};
+        final ArgumentTypes[] types = {ArgumentTypes.STRING};
         if (!validateArguments(args, types)) {
             callbackContext.error("Invalid arguments given");
             return;
@@ -358,7 +378,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         }
 
         String streamName = args.getString(0);
-        boolean isRecording = args.getBoolean(1);
+
         cordova.getActivity().runOnUiThread(new Runnable() {
             public void run() {
                 // We have to do this trickery for the time being in order to kick-start the publishing process.
@@ -368,10 +388,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 publishCam.setCamera(publishCam.getCamera());
                 publishCam.getCamera().startPreview();
 
-                if (isRecording)
-                    stream.publish(streamName, RecordType.Record);
-                else
-                    stream.publish(streamName, RecordType.Live);
+                stream.publish(streamName, recordType);
                 callbackContext.success();
             }
         });
@@ -383,10 +400,11 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
     }
 
     private void subscribe(JSONArray args, CallbackContext callbackContext) throws JSONException {
-        final ArgumentTypes[] types = {ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT,
-                ArgumentTypes.STRING, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.INT,
-                ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.BOOLEAN, ArgumentTypes.STRING,
-                ArgumentTypes.BOOLEAN, ArgumentTypes.DOUBLE, ArgumentTypes.DOUBLE };
+        final ArgumentTypes[] types = {ArgumentTypes.STRING,
+                ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT,
+                ArgumentTypes.STRING, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.STRING,
+                ArgumentTypes.BOOLEAN, ArgumentTypes.BOOLEAN, ArgumentTypes.INT,
+                ArgumentTypes.DOUBLE, ArgumentTypes.DOUBLE };
         if (!validateArguments(args, types)) {
             callbackContext.error("Invalid arguments given");
             return;
@@ -419,26 +437,24 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         }
 
         // Pull out all the parameters passed in, make note positions are in device independent (dp) units
-        int xPos = dpToPx(args.getInt(0));
-        int yPos = dpToPx(args.getInt(1));
-        int width = dpToPx(args.getInt(2));
-        int height = dpToPx(args.getInt(3));
+        String streamName = args.getString(0);
+        int renderX = dpToPx(args.getInt(1));
+        int renderY = dpToPx(args.getInt(2));
+        int renderWidth = dpToPx(args.getInt(3));
+        int renderHeight = dpToPx(args.getInt(4));
 
-        String host = args.getString(4);
-        int portNumber = args.getInt(5);
-        String appName = args.getString(6);
-        int audioBandwidth = args.getInt(7);
-        int videoBandwidth = args.getInt(8);
-        int frameRate = args.getInt(9);
+        String host = args.getString(5);
+        int portNumber = args.getInt(6);
+        String appName = args.getString(7);
 
-        String licenseKey = args.getString(10);
-        boolean showDebugView = args.getBoolean(11);
-        String streamName = args.getString(12);
-        playBehindWebview = args.getBoolean(13);
+        String licenseKey = args.getString(8);
+        boolean showDebugView = args.getBoolean(9);
 
-        float bufferTime = (float)args.getDouble(14);
-        float serverBufferTime = (float)args.getDouble(15);
+        playBehindWebview = args.getBoolean(10);
+        int scaleMode = args.getInt(11);
 
+        float bufferTime = (float)args.getDouble(12);
+        float serverBufferTime = (float)args.getDouble(13);
 
         R5Configuration configuration = new R5Configuration(R5StreamProtocol.RTSP, host, portNumber, appName);
         configuration.setLicenseKey(licenseKey);
@@ -449,27 +465,20 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
         initiateConnection(configuration);
 
-        stream.setScaleMode(0);
-
-        stream.audioController.sampleRate = 44100;
+        stream.setScaleMode(scaleMode);
 
         //show all logging
-        stream.setLogLevel(R5Stream.LOG_LEVEL_DEBUG);
+        // stream.setLogLevel(R5Stream.LOG_LEVEL_DEBUG);
 
         cordova.getActivity().runOnUiThread(new Runnable() {
             public void run() {
 
-                createVideoView();
+                createVideoView(renderX, renderY, renderWidth, renderHeight);
 
                 videoView.attachStream(stream);
                 videoView.showDebugView(showDebugView);
 
                 stream.play(streamName);
-
-                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(width, height);
-                params.setMargins(xPos, yPos, 0, 0);
-                videoView.setLayoutParams(params);
-                layout.requestLayout();
 
                 callbackContext.success();
             }
@@ -597,15 +606,15 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
             return;
         }
 
-        int xPos = args.getInt(0);
-        int yPos = args.getInt(1);
-        int width = args.getInt(2);
-        int height = args.getInt(3);
+        int renderX = dpToPx(args.getInt(0));
+        int renderY = dpToPx(args.getInt(1));
+        int renderWidth = dpToPx(args.getInt(2));
+        int renderHeight = dpToPx(args.getInt(3));
 
         cordova.getActivity().runOnUiThread(new Runnable() {
             public void run() {
-                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(width, height);
-                params.setMargins(xPos, yPos, 0, 0);
+                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(renderWidth, renderHeight);
+                params.setMargins(renderX, renderY, 0, 0);
                 videoView.setLayoutParams(params);
                 layout.requestLayout();
                 callbackContext.success();
@@ -753,13 +762,53 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         }
     }
 
-    private boolean checkForPermissions() {
+    private void checkPermissions(JSONArray args, CallbackContext callbackContext) throws JSONException {
+        final ArgumentTypes[] types = {ArgumentTypes.STRING};
+        if (!validateArguments(args, types)) {
+            callbackContext.error("Invalid arguments given");
+            return;
+        }
+        boolean checkPublisherPermissions = args.getString(0).equalsIgnoreCase("publisher");
+        String permissions[];
+        if (checkPublisherPermissions)
+            permissions = publisherPermissions;
+        else
+            permissions = subscriberPermissions;
+
+        ArrayList<String> missingPermissionsList = new ArrayList<String>();
         for (String perm : permissions) {
-            if (cordova.hasPermission(perm) == false) {
-                return false;
+            if (!cordova.hasPermission(perm)) {
+                missingPermissionsList.add(perm);
+            }
+            }
+
+        if (missingPermissionsList.size() > 0) {
+            cordova.requestPermissions(this, 0, permissions);
+            permissionCallbackContext = callbackContext;
+        } else {
+            callbackContext.success();
+        }
+        }
+
+    @Override
+    public void onRequestPermissionResult(int requestCode, String[] permissions,
+                                          int[] grantResults) throws JSONException {
+
+        ArrayList<String> missingPermissionsList = new ArrayList<String>();
+        for (int i = 0; i < grantResults.length; i++) {
+            if (grantResults[i] == -1) {
+                missingPermissionsList.add(permissions[i]);
             }
         }
-        return true;
+
+        if (missingPermissionsList.size() == 0) {
+            permissionCallbackContext.success();
+            return;
+        }
+
+        String missingPermissions = String.join(",", missingPermissionsList);
+        permissionCallbackContext.error(missingPermissions);
+        permissionCallbackContext = null;
     }
 
     private Camera openFrontFacingCameraGingerbread() {
