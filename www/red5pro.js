@@ -94,10 +94,10 @@ let red5promobile = new function () {
                 options.port,
                 options.app,
                 options.licenseKey,
-                options.debugView || false,
-                options.renderBelow || false,
-                options.bufferTime || 0,
-                options.serverBufferTime || 0
+                options.debugView,
+                options.renderBelow,
+                options.bufferTime,
+                options.serverBufferTime
             ];
             exec(success, fail, PLUGIN_NAME, 'subscribe', initArray);
         };

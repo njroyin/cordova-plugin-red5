@@ -213,7 +213,8 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         final ArgumentTypes[] types = {ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT,
                 ArgumentTypes.STRING, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.INT,
                 ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.STRING, ArgumentTypes.BOOLEAN,
-                ArgumentTypes.BOOLEAN, ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.STRING};
+                ArgumentTypes.BOOLEAN, ArgumentTypes.INT, ArgumentTypes.INT, ArgumentTypes.INT,
+                ArgumentTypes.INT, ArgumentTypes.STRING };
         if (!validateArguments(args, types)) {
             callbackContext.error("Invalid arguments given");
             return;
