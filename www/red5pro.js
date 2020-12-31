@@ -96,6 +96,7 @@ let red5promobile = new function () {
                 options.licenseKey,
                 options.debugView,
                 options.renderBelow,
+                options.scaleMode,
                 options.bufferTime,
                 options.serverBufferTime
             ];

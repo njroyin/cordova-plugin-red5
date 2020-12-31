@@ -172,7 +172,7 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
 
     @Override
     public void onConnectionEvent(R5ConnectionEvent event) {
-        Log.d("R5Cordova", ":onConnectionEvent " + event.name());
+        Log.d("R5Cordova", ":onConnectionEvent " + event.name() + " data: " + event.message);
 
         sendEventMessage("{ \"type\" : \"" + event.name() + "\", \"data\" : \"" + event.message + "\" }");
 
