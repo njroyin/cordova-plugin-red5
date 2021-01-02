@@ -22,8 +22,7 @@
 - (void)bringVideoToFront:(CDVInvokedUrlCommand*)command;
 - (void)updateScaleMode:(CDVInvokedUrlCommand*)command;
 - (void)getStreamStats:(CDVInvokedUrlCommand*)command;
-
-#pragma mark Other Methods
+- (void)checkPermissions:(CDVInvokedUrlCommand*)command;
 - (void)swapCamera:(CDVInvokedUrlCommand*)command;
 - (void)registerEvents:(CDVInvokedUrlCommand*)command;
 - (void)unregisterEvents:(CDVInvokedUrlCommand*)command;

@@ -4,7 +4,7 @@
 #include <AVFoundation/AVFoundation.h>
 
 #import <Cordova/CDV.h>
-#import "Red5pro.h"
+#import "red5pro.h"
 
 
 @interface Red5Pro () {
@@ -20,19 +20,21 @@
     BOOL _useVideo;
     BOOL _useAudio;
     BOOL _playbackVideo;
-    int _cameraWidth;
-    int _cameraHeight;
-    int _bitrate;
+    int _cameraCaptureWidth;
+    int _cameraCaptureHeight;
+    int _videoBandwidthKbps;
     int _framerate;
-    int _audioBitrate;
+    int _audioBandwidthKbps;
     int _audioSampleRate;
     BOOL _useAdaptiveBitrateController;
     BOOL _useBackfacingCamera;
 
     int _currentRotation;
     bool _playBehindWebview;
+    enum R5RecordType _recordType;
 
     NSString *eventCallbackId;
+    NSString *checkPermissionCallbackId;
 }
 @end
 
@@ -47,11 +49,11 @@
     _useVideo = YES;
     _useAudio = YES;
     _playbackVideo = YES;
-    _bitrate = 750;
+    _videoBandwidthKbps = 750;
     _framerate = 25;
-    _audioBitrate = 32;
-    _cameraWidth = 720;
-    _cameraHeight = 480;
+    _audioBandwidthKbps = 32;
+    _cameraCaptureWidth = 720;
+    _cameraCaptureHeight = 480;
     _audioSampleRate = 44100;
     _useAdaptiveBitrateController = NO;
     _audioMode = R5AudioControllerModeStandardIO;
@@ -59,14 +61,7 @@
     r5_set_log_level(_logLevel);
 
     _playBehindWebview = false;
-
-    if ([self verifyMediaAuthorization:AVMediaTypeVideo] == FALSE) {
-        NSLog(@"Error getting video permissions");
-    }
-
-    if ([self verifyMediaAuthorization:AVMediaTypeAudio] == FALSE) {
-        NSLog(@"Error getting audio mic permissions.");
-    }
+    _recordType = R5RecordTypeLive;
 }
 
 #pragma mark Helper Functions
@@ -95,7 +90,7 @@
 {
     AVCaptureDevice *audio = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeAudio];
     R5Microphone *microphone = [[R5Microphone alloc] initWithDevice:audio];
-    microphone.bitrate = _audioBitrate;
+    microphone.bitrate = _audioBandwidthKbps;
     microphone.sampleRate = _audioSampleRate;
     return microphone;
 }
@@ -103,9 +98,9 @@
 - (R5Camera *)setUpCamera
 {
     AVCaptureDevice *video = [self getCameraDevice:_useBackfacingCamera];
-    R5Camera *camera = [[R5Camera alloc] initWithDevice:video andBitRate:_bitrate];
-    [camera setWidth:_cameraWidth];
-    [camera setHeight:_cameraHeight];
+    R5Camera *camera = [[R5Camera alloc] initWithDevice:video andBitRate:_videoBandwidthKbps];
+    [camera setWidth:_cameraCaptureWidth];
+    [camera setHeight:_cameraCaptureHeight];
     [camera setOrientation:90];
     [camera setFps:_framerate];
     return camera;
@@ -148,18 +143,6 @@
     alertText = @"It looks like your privacy settings are preventing us from accessing your camera or microphone for video presenting. You can fix this by doing the following:\n\n1. Close this app.\n\n2. Open the Settings app.\n\n3. Scroll to the privacy section and select Camera or Microphone.\n\n4. Turn the Camera and Microphone on for this app.\n\n5. Open this app and try again.";
 
     [self showAlert:@"Permission Error" withMessage:alertText];
-
-//    UIAlertView *alert = [[UIAlertView alloc]
-//                          initWithTitle:@"Error"
-//                          message:alertText
-//                          delegate:self
-//                          cancelButtonTitle:alertButton
-//                          otherButtonTitles:nil];
-//    alert.tag = 3491832;
-//    [alert show];
-
-
-
 }
 
 - (BOOL)verifyMediaAuthorization:(NSString *)mediaType
@@ -168,10 +151,12 @@
     if(authStatus == AVAuthorizationStatusAuthorized) {
         return TRUE;
     } else if(authStatus == AVAuthorizationStatusDenied){
+        [self sendFailurePluginResult:self->checkPermissionCallbackId withErrorMessage:@"Permission Denied"];
         [self deviceDeniedError];
         return FALSE;
     } else if(authStatus == AVAuthorizationStatusRestricted){
         // It means their ADMIN locked them out. Not likely to happen
+        [self sendFailurePluginResult:self->checkPermissionCallbackId withErrorMessage:@"Permission Denied"];
         [self deviceDeniedError];
         return FALSE;
     } else if(authStatus == AVAuthorizationStatusNotDetermined){
@@ -179,17 +164,67 @@
         [AVCaptureDevice requestAccessForMediaType:mediaType completionHandler:^(BOOL granted) {
             if(granted){
                 NSLog(@"Granted access to %@", mediaType);
+                if ([mediaType isEqualToString:AVMediaTypeVideo]) {
+                    // Now check audio recursively
+                    [self verifyMediaAuthorization:AVMediaTypeAudio];
+                } else {
+                    if (self->checkPermissionCallbackId != NULL) {
+                        [self sendSuccessPluginResult:self->checkPermissionCallbackId withSuccessMessage:@"All Good."];
+                    }
+                }
             } else {
                 NSLog(@"Not granted access to %@", mediaType);
-                [self deviceDeniedError];
+                [self sendFailurePluginResult:self->checkPermissionCallbackId withErrorMessage:@"Permission Denied"];
             }
         }];
+        return FALSE;
     } else {
         // impossible, unknown authorization status
+        [self sendFailurePluginResult:self->checkPermissionCallbackId withErrorMessage:@"Permission Denied"];
         return FALSE;
     }
+}
 
-    return FALSE;
+- (BOOL)isGrantedAccessToMedia
+{
+    AVAuthorizationStatus videoAuthStatus = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
+    AVAuthorizationStatus audioAuthStatus = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeAudio];
+    return videoAuthStatus == AVAuthorizationStatusAuthorized && audioAuthStatus == AVAuthorizationStatusAuthorized;
+}
+
+- (void)checkPermissions:(CDVInvokedUrlCommand *)command
+{
+    // Subscriber needs no special permissions
+    NSString *streamRole = [command argumentAtIndex:0];
+    if ([streamRole isEqualToString:@"subscriber"]) {
+        [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good."];
+        return;
+    }
+
+    // Do a quick check to see if we already have permissions before requesting with a popup
+    if ([self isGrantedAccessToMedia] == TRUE) {
+        [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good."];
+        return;
+    }
+
+    // Since the verifyMediaAuthorization method could call a popup in which there will be a callback routine
+    // we need to store off the callback ID for later use in failing
+    checkPermissionCallbackId = command.callbackId;
+    if ([self verifyMediaAuthorization:AVMediaTypeVideo] == TRUE) {
+        [self verifyMediaAuthorization:AVMediaTypeAudio];
+    }
+}
+
+- (void)sendFailurePluginResult:(NSString *)callbackId withErrorMessage:(NSString *)errorMessage
+{
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:errorMessage];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
+}
+
+- (void)sendSuccessPluginResult:(NSString *)callbackId withSuccessMessage:(NSString *)successMessage
+{
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:successMessage];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
 }
 
 - (void)onDeviceOrientation:(NSNotification *)notification {
@@ -252,20 +287,35 @@
     NSString *host = [command argumentAtIndex:4];
     int port = ((NSNumber*)[command.arguments objectAtIndex:5]).intValue;
     NSString *appName = [command argumentAtIndex:6];
-    _audioBitrate = ((NSNumber*)[command.arguments objectAtIndex:7]).intValue;
-    _bitrate = ((NSNumber*)[command.arguments objectAtIndex:8]).intValue;
+    _audioBandwidthKbps = ((NSNumber*)[command.arguments objectAtIndex:7]).intValue;
+    _videoBandwidthKbps = ((NSNumber*)[command.arguments objectAtIndex:8]).intValue;
     _framerate = ((NSNumber*)[command.arguments objectAtIndex:9]).intValue;
 
     NSString *licenseKey = [command argumentAtIndex:10];
     _showDebugInfo = ((NSNumber*)[command.arguments objectAtIndex:11]).boolValue;
     bool playBehindWebview = ((NSNumber*)[command.arguments objectAtIndex:12]).boolValue;
 
-    _cameraWidth = ((NSNumber*)[command.arguments objectAtIndex:13]).intValue;
-    _cameraHeight = ((NSNumber*)[command.arguments objectAtIndex:14]).intValue;
+    _cameraCaptureWidth = ((NSNumber*)[command.arguments objectAtIndex:13]).intValue;
+    _cameraCaptureHeight = ((NSNumber*)[command.arguments objectAtIndex:14]).intValue;
 
-    if ([self verifyMediaAuthorization:AVMediaTypeVideo] == FALSE || [self verifyMediaAuthorization:AVMediaTypeAudio] == FALSE) {
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing Authorization."];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    _scaleMode = ((NSNumber*)[command.arguments objectAtIndex:15]).intValue;
+    _audioSampleRate = ((NSNumber*)[command.arguments objectAtIndex:16]).intValue;
+
+    NSString *streamMode = [command argumentAtIndex:17];
+    if ([streamMode isEqualToString:@"append"])
+        _recordType = R5RecordTypeAppend;
+    else if ([streamMode isEqualToString:@"record"])
+        _recordType = R5RecordTypeRecord;
+    else if ([streamMode isEqualToString:@"live"])
+        _recordType = R5RecordTypeLive;
+    else {
+        [self sendFailurePluginResult:command.callbackId withErrorMessage:@"Invalid Record Type"];
+        return;
+    }
+
+    // Check to make sure we have permission to camera and microphone
+    if ([self isGrantedAccessToMedia] == FALSE) {
+        [self sendFailurePluginResult:command.callbackId withErrorMessage:@"Missing Authorization"];
         return;
     }
 
@@ -322,26 +372,18 @@
         }
     });
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good"];
 }
 
 - (void)publish:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Called publish");
 
-    NSString *streamName = [command argumentAtIndex:0];
-    bool isRecording = ((NSNumber*)[command.arguments objectAtIndex:1]).boolValue;
+    _streamName = [command argumentAtIndex:0];
 
-    _streamName = streamName;
+    [self.stream publish:_streamName type:_recordType];
 
-    if (isRecording)
-        [self.stream publish:streamName type:R5RecordTypeRecord];
-    else
-        [self.stream publish:streamName type:R5RecordTypeLive];
-
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good"];
 }
 
 - (void)unpublish:(CDVInvokedUrlCommand*)command
@@ -351,6 +393,11 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self->_isStreaming) {
             [self.stream stop];
+
+            // Catch - The following is just a catch incase we don't get a stream stop event
+            [NSThread sleepForTimeInterval: 0.25f];
+            [self tearDown];
+            // Catch
         }
         else {
             //self.onUnpublishNotification(@{});
@@ -358,32 +405,31 @@
         }
     });
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good"];
 }
 
 - (void)subscribe:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Called subscribe");
 
-    int xPos = ((NSNumber*)[command.arguments objectAtIndex:0]).intValue;
-    int yPos = ((NSNumber*)[command.arguments objectAtIndex:1]).intValue;
-    int width = ((NSNumber*)[command.arguments objectAtIndex:2]).intValue;
-    int height = ((NSNumber*)[command.arguments objectAtIndex:3]).intValue;
-    NSString *host = [command argumentAtIndex:4];
-    int port = ((NSNumber*)[command.arguments objectAtIndex:5]).intValue;
-    NSString *appName = [command argumentAtIndex:6];
-    _audioBitrate = ((NSNumber*)[command.arguments objectAtIndex:7]).intValue;
-    _bitrate = ((NSNumber*)[command.arguments objectAtIndex:8]).intValue;
-    _framerate = ((NSNumber*)[command.arguments objectAtIndex:9]).intValue;
+    NSString *streamName = [command argumentAtIndex:0];
+    int xPos = ((NSNumber*)[command.arguments objectAtIndex:1]).intValue;
+    int yPos = ((NSNumber*)[command.arguments objectAtIndex:2]).intValue;
+    int width = ((NSNumber*)[command.arguments objectAtIndex:3]).intValue;
+    int height = ((NSNumber*)[command.arguments objectAtIndex:4]).intValue;
+    NSString *host = [command argumentAtIndex:5];
+    int port = ((NSNumber*)[command.arguments objectAtIndex:6]).intValue;
+    NSString *appName = [command argumentAtIndex:7];
 
-    NSString *licenseKey = [command argumentAtIndex:10];
-    _showDebugInfo = ((NSNumber*)[command.arguments objectAtIndex:11]).boolValue;
-    NSString *streamName = [command argumentAtIndex:12];
-    bool playBehindWebview = ((NSNumber*)[command.arguments objectAtIndex:13]).boolValue;
+    NSString *licenseKey = [command argumentAtIndex:8];
+    _showDebugInfo = ((NSNumber*)[command.arguments objectAtIndex:9]).boolValue;
 
-    float bufferTime = ((NSNumber*)[command.arguments objectAtIndex:14]).floatValue;
-    float serverBufferTime = ((NSNumber*)[command.arguments objectAtIndex:15]).floatValue;
+    bool playBehindWebview = ((NSNumber*)[command.arguments objectAtIndex:10]).boolValue;
+
+    _scaleMode = ((NSNumber*)[command.arguments objectAtIndex:11]).intValue;
+
+    float bufferTime = ((NSNumber*)[command.arguments objectAtIndex:12]).floatValue;
+    float serverBufferTime = ((NSNumber*)[command.arguments objectAtIndex:13]).floatValue;
 
     R5Configuration *configuration = [[R5Configuration alloc] init];
     configuration.protocol = 1;
@@ -431,8 +477,7 @@
         [self.stream play:streamName];
     });
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good"];
 }
 
 - (void)unsubscribe:(CDVInvokedUrlCommand*)command
@@ -447,8 +492,7 @@
         }
     });
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good"];
 }
 
 - (void)pauseVideo:(CDVInvokedUrlCommand*)command
@@ -460,8 +504,7 @@
             self.stream.pauseVideo = true;
     });
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good"];
 }
 
 - (void)unpauseVideo:(CDVInvokedUrlCommand*)command
@@ -473,8 +516,7 @@
             self.stream.pauseVideo = false;
     });
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good"];
 }
 
 - (void)pauseAudio:(CDVInvokedUrlCommand*)command
@@ -486,8 +528,7 @@
             self.stream.pauseAudio = true;
     });
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good"];
 }
 
 - (void)unpauseAudio:(CDVInvokedUrlCommand*)command
@@ -499,8 +540,7 @@
             self.stream.pauseAudio = false;
     });
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good"];
 }
 
 - (void)resize:(CDVInvokedUrlCommand*)command
@@ -524,8 +564,7 @@
         }];
     });
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good"];
 }
 
 - (void)sendVideoToBack:(CDVInvokedUrlCommand*)command
@@ -535,8 +574,7 @@
         [self.controller.view.superview sendSubviewToBack: self.controller.view];
     });
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good"];
 }
 
 - (void)bringVideoToFront:(CDVInvokedUrlCommand*)command
@@ -546,8 +584,7 @@
         [self.controller.view.superview bringSubviewToFront: self.controller.view];
     });
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good"];
 }
 
 - (void)updateScaleMode:(CDVInvokedUrlCommand*)command
@@ -559,8 +596,7 @@
         [self.controller setScaleMode:_scaleMode];
     }
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good"];
 }
 
 - (void)swapCamera:(CDVInvokedUrlCommand*)command
@@ -576,8 +612,7 @@
         }
     });
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good"];
 }
 
 - (void)registerEvents:(CDVInvokedUrlCommand*)command
@@ -593,8 +628,7 @@
 
     eventCallbackId = nil;
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"All Good."];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self sendSuccessPluginResult:command.callbackId withSuccessMessage:@"All Good"];
 }
 
 - (void)getStreamStats:(CDVInvokedUrlCommand*)command
@@ -602,15 +636,13 @@
     NSLog(@"Called getStreamStats");
 
     if (self.stream == nil) {
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"No streaming connection."];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        [self sendFailurePluginResult:command.callbackId withErrorMessage:@"No streaming connection."];
         return;
     }
 
     r5_stats *stats = [self.stream getDebugStats];
     if (stats == nil) {
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Error getting stats."];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        [self sendFailurePluginResult:command.callbackId withErrorMessage:@"Error getting stats."];
         return;
     }
 
