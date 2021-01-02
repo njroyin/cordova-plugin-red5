@@ -220,6 +220,11 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
             return;
         }
 
+        if (!hasPublisherPermissions()) {
+            callbackContext.error("Missing audio/video permissions");
+            return;
+        }
+
         // If we are previously previewing we need to clean up and re-launch
         if (isPreviewing) {
             stopPreviewAndStreaming();
@@ -763,12 +768,20 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         }
     }
 
+    private boolean hasPublisherPermissions() {
+        for (String perm : publisherPermissions) {
+            if (!cordova.hasPermission(perm)) return false;
+        }
+        return true;
+    }
+
     private void checkPermissions(JSONArray args, CallbackContext callbackContext) throws JSONException {
         final ArgumentTypes[] types = {ArgumentTypes.STRING};
         if (!validateArguments(args, types)) {
             callbackContext.error("Invalid arguments given");
             return;
         }
+
         boolean checkPublisherPermissions = args.getString(0).equalsIgnoreCase("publisher");
         String permissions[];
         if (checkPublisherPermissions)
