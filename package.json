@@ -27,10 +27,10 @@
   "devDependencies": {},
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@gitlab.com/plvr/cordova-plugin-red5.git"
+    "url": "git+ssh://git@gitlab.com/redsky_public/cordova-plugin-red5.git"
   },
   "bugs": {
-    "url": "https://gitlab.com/plvr/cordova-plugin-red5/issues"
+    "url": "https://gitlab.com/redsky_public/cordova-plugin-red5/issues"
   },
-  "homepage": "https://gitlab.com/plvr/cordova-plugin-red5#README"
+  "homepage": "https://gitlab.com/redsky_public/cordova-plugin-red5#README"
 }
