@@ -2,7 +2,7 @@
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="cordova-plugin-red5pro"
-    version="1.2.4">
+    version="2.0.0">
     <name>Red5Pro</name>
     <description>Cordova Red5 Pro Mobile SDK Plugin</description>
     <license>MIT</license>
@@ -25,11 +25,6 @@
             <uses-permission android:name="android.permission.CAMERA" />
             <uses-permission android:name="android.permission.RECORD_AUDIO" />
             <uses-permission android:name="android.permission.INTERNET" />
-            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-            <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-            <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-            <uses-permission android:name="android.permission.CAPTURE_AUDIO_OUTPUT" />
-            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
         </config-file>
 
         <source-file src="src/android/Red5Pro.java" target-dir="src/com/red5pro/" />
