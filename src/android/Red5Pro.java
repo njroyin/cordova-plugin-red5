@@ -291,15 +291,6 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         configuration.setLicenseKey(licenseKey);
         configuration.setBundleID(cordova.getActivity().getPackageName());
 
-        initiateConnection(configuration);
-
-        stream.setScaleMode(scaleMode);
-
-        stream.audioController.sampleRate = audioSampleRateHz;
-
-        //show all logging
-        // stream.setLogLevel(R5Stream.LOG_LEVEL_DEBUG);
-
         cordova.getActivity().runOnUiThread(new Runnable() {
             public void run() {
                 createVideoView(renderXPos, renderYPos, renderWidth, renderHeight);
@@ -316,6 +307,12 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
                 camera.setFramerate(frameRate);
 
                 Log.d("R5Cordova", "Selected Camera width, height: " + Integer.toString(camera.getWidth()) + "," + Integer.toString(camera.getHeight()));
+
+                initiateConnection(configuration);
+                stream.setScaleMode(scaleMode);
+                stream.audioController.sampleRate = audioSampleRateHz;
+                //show all logging
+                // stream.setLogLevel(R5Stream.LOG_LEVEL_DEBUG);
 
                 mic = new R5Microphone();
                 mic.setBitRate(audioBandwidthKbps);
@@ -469,17 +466,15 @@ public class Red5Pro extends CordovaPlugin implements R5ConnectionListener {
         configuration.setStreamBufferTime(serverBufferTime > 2.0f ? serverBufferTime : 2.0f);
         configuration.setBundleID(cordova.getActivity().getPackageName());
 
-        initiateConnection(configuration);
-
-        stream.setScaleMode(scaleMode);
-
-        //show all logging
-        // stream.setLogLevel(R5Stream.LOG_LEVEL_DEBUG);
-
         cordova.getActivity().runOnUiThread(new Runnable() {
             public void run() {
 
                 createVideoView(renderX, renderY, renderWidth, renderHeight);
+
+                initiateConnection(configuration);        
+                stream.setScaleMode(scaleMode);        
+                //show all logging
+                // stream.setLogLevel(R5Stream.LOG_LEVEL_DEBUG);
 
                 videoView.attachStream(stream);
                 videoView.showDebugView(showDebugView);

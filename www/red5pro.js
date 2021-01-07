@@ -97,8 +97,8 @@ let red5promobile = new function () {
                 options.debugView,
                 options.renderBelow,
                 options.scaleMode,
-                options.bufferTime,
-                options.serverBufferTime
+                options.bufferTimeSecs,
+                options.serverBufferTimeSecs
             ];
             exec(success, fail, PLUGIN_NAME, 'subscribe', initArray);
         };
